@@ -57,7 +57,9 @@ def getFileName(file):
         return os.path.basename(file)
 
 def getFilePath(file):
-        return os.path.dirname(os.path.abspath(file))+'\\'
+        return os.path.dirname(file)+'\\'
+       # return os.path.dirname(os.path.abspath(file))+'\\'
+
 	
 def doFadeInFadeOut(video):
   if ("fifo_" in video):
@@ -116,7 +118,7 @@ def concatFiles(files, output):
         inputVideos= ''
 
         for f in files:
-                inputVideos = inputVideos+' -i '+f
+                inputVideos = 'inputVideos -i "'+f+'"'
 
         params=inputVideos+' -filter_complex "concat=n={len}:v=1:a=0 [v]" -map "[v]"  "{output}"'.format(len=len(files), output=output)
         execFfmpeg(params)    
@@ -128,16 +130,18 @@ def reverseLongVideo(video):
 
         listConcat=[]
         num=splitVideoKeyFrames(video, folder+'out')
-        files = [f for f in listdir(dir_path+'\\'+folder) if (isfile(join(dir_path+'\\'+folder, f)) and (os.path.splitext(f)[1].lower() in [getExt(video)]))]
+        files = [f for f in listdir(folder) if (isfile(join(folder, f)) and (os.path.splitext(f)[1].lower() in [getExt(video)]))]
         sort_nicely(files, reverse=True)
         for f in files:
                 file=folder+f
                 fileRev=reverseVideo(file)                
                 listConcat.append(fileRev)
-                
-        concatFiles(listConcat, getFilePath(video)+'rev_'+getFileName(video))
 
-        shutil.rmtree(folder)
+        output=getFilePath(video)+'rev_'+getFileName(video)
+        concatFiles(listConcat, output)
+
+        if (os.path.isfile(output)):
+                shutil.rmtree(folder)
 		
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
