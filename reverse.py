@@ -53,8 +53,11 @@ def getDuration(video):
 def getExt(file):
         return os.path.splitext(file)[1].lower()
 
-def getFileName(file):
-        return os.path.basename(file)
+def getFileName(file, comExtensao=True):
+        if (comExtensao):
+            return os.path.basename(file)
+        else:
+            return os.path.splitext(os.path.basename(file))[0] 
 
 def getFilePath(file):
         return os.path.dirname(file)+'\\'
@@ -76,23 +79,26 @@ def doFadeInFadeOut(video):
   rename(video, video+'.bkp')
   return newVid	  
   
-def reverseVideo(file, prefix='rev_', removeOriginal=True):
+def reverseVideo(file, prefix='rev_', removeOriginal=True):   
         video=getFileName(file)
+
+        if (prefix!='') & (video.startswith(prefix)):
+            return file
         
         if (prefix==''):
-                newVideo=getFilePath(file)+'tmp'+video
+            newVideo=getFilePath(file)+'tmp'+video
         else:        
-                newVideo = getFilePath(file)+prefix+video
+            newVideo = getFilePath(file)+prefix+video
                 
         params = '-i "{0}" -vf reverse -af areverse "{1}" '.format(file, newVideo)  
   
         execFfmpeg(params) 
   
         if (os.path.isfile(newVideo)) & (removeOriginal): 
-                os.remove(file) 
+            os.remove(file) 
 
         if (prefix==''):
-                os.rename(newVideo, file)
+            os.rename(newVideo, file)
                 
         return newVideo
 		
@@ -114,14 +120,33 @@ def splitVideo(video, tempoVideo=4, outputPrefix='vid'):
 def splitVideoKeyFrames(video, outputPrefix='out'):
         execFfmpeg('-i "{input}" -acodec copy -f segment -vcodec copy -reset_timestamps 1 -map 0 "{prefix}%d{ext}"'.format(input=video, prefix=outputPrefix,ext=getExt(video)))
 
-def concatFiles(files, output):
+def concatFilesDirect(files, output):
         inputVideos= ''
 
         for f in files:
-                inputVideos = 'inputVideos -i "'+f+'"'
-
+                inputVideos = inputVideos+' -i "'+f+'"'
+                
         params=inputVideos+' -filter_complex "concat=n={len}:v=1:a=0 [v]" -map "[v]"  "{output}"'.format(len=len(files), output=output)
-        execFfmpeg(params)    
+        execFfmpeg(params)
+
+def concatFiles(files, output):
+        listName='tmp'+getFileName(output, False)+'.txt'
+        if isfile(listName):
+            os.remove(listName)
+
+        thefile = open(listName, 'w+')
+            
+        for item in files:
+            thefile.write("file '%s'\n" % item)
+
+        thefile.close()
+
+#        params=' -i "{inputList}" -filter_complex "concat=n={len}:v=1:a=0 [v]" -map "[v]"  "{output}"'.format(inputList=listName, len=len(files), output=output)
+        params='-f concat -safe 0 -i "{inputList}" "{output}"'.format(inputList=listName, output=output)
+        execFfmpeg(params)
+        
+#        if isfile(listName):
+#            os.remove(listName)
 
 def reverseLongVideo(video):
         folder=getFilePath(video)+os.path.splitext(getFileName(video))[0]+'tmp\\'
@@ -140,8 +165,8 @@ def reverseLongVideo(video):
         output=getFilePath(video)+'rev_'+getFileName(video)
         concatFiles(listConcat, output)
 
-        if (os.path.isfile(output)):
-                shutil.rmtree(folder)
+        #if (os.path.isfile(output)):
+        #        shutil.rmtree(folder)
 		
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
