@@ -66,8 +66,8 @@ def getFileName(file, comExtensao=True):
             return os.path.splitext(os.path.basename(file))[0] 
 
 def getFilePath(file):
-        return os.path.dirname(file)+'\\'
-       # return os.path.dirname(os.path.abspath(file))+'\\'
+       # return os.path.dirname(file)+'\\'
+        return os.path.dirname(os.path.abspath(file))+'\\'
 
 	
 def doFadeInFadeOut(video):
@@ -83,9 +83,14 @@ def doFadeInFadeOut(video):
   execFfmpeg(params)
   
   rename(video, video+'.bkp')
-  return newVid	  
+  return newVid
+
+def changePts(file, pts):
+    params = '-i "{input}" -filter:v "setpts={pts}*PTS" "{output}" '.format(input=file, pts=pts, output=file)
+    execFfmpeg(params)
+    return file
   
-def reverseVideo(file, prefix='rev_', removeOriginal=True):   
+def reverse(file, prefix='rev_', removeOriginal=True):   
         video=getFileName(file)
 
         if (prefix!='') & (video.startswith(prefix)):
@@ -154,22 +159,46 @@ def concatFiles(files, output):
         if isfile(listName):
             os.remove(listName)
 
-def reverseLongVideo(video):
+def moveToFolder(video, Folder='output'):
+    if (Folder == ""):
+        return video
+
+    if not os.path.exists(Folder):
+        os.makedirs(Folder)
+
+    newVideo=Folder+"\\"+getFileName(video)
+    if isfile(newVideo):
+         os.remove(newVideo)
+         
+    os.rename(video, newVideo)
+    return newVideo
+
+def reverseLongVideo(video, MoveToFolder='output'):
+        if "'" in video:
+            newVideo=video.replace("'", "")
+            if isfile(newVideo):
+                os.remove(newVideo)   
+            os.rename(video,newVideo)
+            video=newVideo
+            
+        video=moveToFolder(video, MoveToFolder)
+
         folder=getFilePath(video)+os.path.splitext(getFileName(video))[0]+'tmp\\'
         if not os.path.exists(folder):
                 os.makedirs(folder)
 
-        listConcat=[]
+        listVideos=[]
         num=splitVideoKeyFrames(video, folder+'out')
         files = [f for f in listdir(folder) if (isfile(join(folder, f)) and (os.path.splitext(f)[1].lower() in [getExt(video)]))]
         sort_nicely(files, reverse=True)
         for f in files:
                 file=folder+f
-                fileRev=reverseVideo(file)                
-                listConcat.append(fileRev)
+                fileRev=reverse(file)
+                changePts(file, 2.0)
+                listVideos.append(fileRev)
 
         output=getFilePath(video)+'rev_'+getFileName(video)
-        concatFiles(listConcat, output)
+        concatFiles(listVideos, output)
 
         if (os.path.isfile(output)):
                 shutil.rmtree(folder)
