@@ -5,8 +5,6 @@ import sys
 print(sys.argv)
 print(vUtils.getCurDir())
 
-vUtils.changePts(sys.argv[1], 0.5, "slow")
-
 if (sys.argv[1] == '-rev'):
     print(sys.argv[2])
     print(vUtils.getFilePath(sys.argv[2]))

@@ -90,7 +90,10 @@ def changePts(file, pts, prefix=""):
         newFile=getFilePath(file)+prefix+getFileName(file)
     else:
         newFile=file
-    params = '-i "{input}" -filter:v "setpts={pts}*PTS" -y "{output}" '.format(input=file, pts=pts, output=newFile)
+
+    atempo=1.0/pts    
+    #params = '-i "{input}" -r 60 -filter:v  "setpts={pts}*PTS" -y "{output}" '.format(input=file, pts=pts, output=newFile)
+    params='-i "{input}" -r 60 -filter_complex "[0:v]setpts={pts}*PTS[v];[0:a]atempo={atempo}[a]" -map "[v]" -map "[a]" "{output}"'.format(input=file, pts=pts, atempo=atempo, output=newFile)
     execFfmpeg(params)
     return newFile
   
@@ -124,7 +127,7 @@ def splitVideo(video, tempoVideo=4, outputPrefix='vid'):
         num=1
         while (start < duration):
                 nomeVideo=outputPrefix+str(num)+getExt(video)
-                params = '-ss {start} -t {end} -i "{input}" -c copy "{output}" '.format(input=video, start=start, end=tempoVideo, output=nomeVideo)
+                params = '-ss {start} -t {end} -i "{input}" -c copy -y "{output}" '.format(input=video, start=start, end=tempoVideo, output=nomeVideo)
                 execFfmpeg(params) 
                 start=end
                 end=start+tempoVideo
@@ -141,7 +144,7 @@ def concatFilesDirect(files, output):
         for f in files:
                 inputVideos = inputVideos+' -i "'+f+'"'
                 
-        params=inputVideos+' -filter_complex "concat=n={len}:v=1:a=0 [v]" -map "[v]"  "{output}"'.format(len=len(files), output=output)
+        params=inputVideos+' -filter_complex "concat=n={len}:v=1:a=0 [v]" -map "[v]" -y "{output}"'.format(len=len(files), output=output)
         execFfmpeg(params)
 
 def concatFiles(files, output):
@@ -197,12 +200,14 @@ def reverseLongVideo(video, MoveToFolder='output'):
         sort_nicely(files, reverse=True)
         for f in files:
                 file=folder+f
-                fileRev=reverse(file)
-                changePts(file, 2.0)
+                file=changePts(file, 0.75, 'fast')                
+                fileRev=reverse(file)                
                 listVideos.append(fileRev)
 
         output=getFilePath(video)+'rev_'+getFileName(video)
         concatFiles(listVideos, output)
+
+        changePts(video, 0.5, 'fast')
 
         if (os.path.isfile(output)):
                 shutil.rmtree(folder)
