@@ -85,10 +85,14 @@ def doFadeInFadeOut(video):
   rename(video, video+'.bkp')
   return newVid
 
-def changePts(file, pts):
-    params = '-i "{input}" -filter:v "setpts={pts}*PTS" "{output}" '.format(input=file, pts=pts, output=file)
+def changePts(file, pts, prefix=""):
+    if not (prefix==""):
+        newFile=getFilePath(file)+prefix+getFileName(file)
+    else:
+        newFile=file
+    params = '-i "{input}" -filter:v "setpts={pts}*PTS" -y "{output}" '.format(input=file, pts=pts, output=newFile)
     execFfmpeg(params)
-    return file
+    return newFile
   
 def reverse(file, prefix='rev_', removeOriginal=True):   
         video=getFileName(file)
