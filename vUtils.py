@@ -6,6 +6,21 @@ from os.path import isfile, join
 import re
 import shutil
 
+class media:
+
+    def __init__(self,mediaPath):
+        self.mediaPath=mediaPath
+        self.filters=[]
+
+class concatFilter:
+
+    def __init__(self):
+        self.mediaList=[]
+
+    def getFilterString:
+        
+
+
 def tryint(s):
     try:
         return int(s)
@@ -93,7 +108,7 @@ def changePts(file, pts, prefix=""):
 
     atempo=1.0/pts    
     #params = '-i "{input}" -r 60 -filter:v  "setpts={pts}*PTS" -y "{output}" '.format(input=file, pts=pts, output=newFile)
-    params='-i "{input}" -r 60 -filter_complex "[0:v]setpts={pts}*PTS[v];[0:a]atempo={atempo}[a]" -map "[v]" -map "[a]" "{output}"'.format(input=file, pts=pts, atempo=atempo, output=newFile)
+    params='-i "{input}" -r 60 -filter_complex "[0:v]setpts={pts}*PTS[v];[0:a]atempo={atempo}[a]" -map "[v]" -map "[a]" -y "{output}"'.format(input=file, pts=pts, atempo=atempo, output=newFile)
     execFfmpeg(params)
     return newFile
   
@@ -136,7 +151,7 @@ def splitVideo(video, tempoVideo=4, outputPrefix='vid'):
         return
 
 def splitVideoKeyFrames(video, outputPrefix='out'):
-        execFfmpeg('-i "{input}" -acodec copy -f segment -vcodec copy -reset_timestamps 1 -map 0 "{prefix}%d{ext}"'.format(input=video, prefix=outputPrefix,ext=getExt(video)))
+        execFfmpeg('-i "{input}" -acodec copy -f segment -vcodec copy -reset_timestamps 1 -map 0 -y "{prefix}%d{ext}"'.format(input=video, prefix=outputPrefix,ext=getExt(video)))
 
 def concatFilesDirect(files, output):
         inputVideos= ''
@@ -160,36 +175,27 @@ def concatFiles(files, output):
         thefile.close()
 
 #        params=' -i "{inputList}" -filter_complex "concat=n={len}:v=1:a=0 [v]" -map "[v]"  "{output}"'.format(inputList=listName, len=len(files), output=output)
-        params='-f concat -safe 0 -i "{inputList}" "{output}"'.format(inputList=listName, output=output)
+        params='-f concat -safe 0 -i "{inputList}" -y "{output}"'.format(inputList=listName, output=output)
         execFfmpeg(params)
         
         if isfile(listName):
             os.remove(listName)
 
-def moveToFolder(video, Folder='output'):
+def moveToFolder(source, Folder='output'):
     if (Folder == ""):
-        return video
+        return source
 
     if not os.path.exists(Folder):
         os.makedirs(Folder)
 
-    newVideo=Folder+"\\"+getFileName(video)
+    newVideo=Folder+"\\"+getFileName(source)
     if isfile(newVideo):
          os.remove(newVideo)
          
-    os.rename(video, newVideo)
+    os.rename(source, newVideo)
     return newVideo
 
-def reverseLongVideo(video, MoveToFolder='output'):
-        if "'" in video:
-            newVideo=video.replace("'", "")
-            if isfile(newVideo):
-                os.remove(newVideo)   
-            os.rename(video,newVideo)
-            video=newVideo
-            
-        video=moveToFolder(video, MoveToFolder)
-
+def reverseLongVideo(video):
         folder=getFilePath(video)+os.path.splitext(getFileName(video))[0]+'tmp\\'
         if not os.path.exists(folder):
                 os.makedirs(folder)
@@ -211,6 +217,8 @@ def reverseLongVideo(video, MoveToFolder='output'):
 
         if (os.path.isfile(output)):
                 shutil.rmtree(folder)
+
+        return output
 	    
 
 		
