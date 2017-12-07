@@ -17,9 +17,18 @@ class concatFilter:
     def __init__(self):
         self.mediaList=[]
 
-    def getFilterString:
-        
+    def getFilterString(self):
+        inputs = ''
+        param1 = ''
+        param2 = ''
+        cnt=0
+        for m in self.mediaList:
+            inputs = inputs +' -i "'+m+'" '
+            for f in self.m.filters:
+                param1 = param1+'[{0}]'+f+'[{1}];'.format(cnt, 'v'+str(cnt))
+                param2 = param2+'[{0}]'.format('v'+str(cnt))
 
+            cnt=cnt+1                                                                       
 
 def tryint(s):
     try:
