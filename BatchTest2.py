@@ -111,8 +111,8 @@ for f in files:
  
   inputVideos = inputVideos+' -i "'+f+'"'
   
-  param2=param2+'[{0}]scale=1280x720,setdar=16/9[{1}];'.format(count, getLabel(count))
-  param3=param3+'['+getLabel(count)+']'
+  param2=param2+'[{0}]scale=1600×900,setdar=16/9[{1}];'.format(count, getLabel(count))
+  param3=param3+'['+getLabel(count)+']' 
   param=param+'[{0}][{1}:a] '.format(getLabel(count), count)  
 
   count=count+1

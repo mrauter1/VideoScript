@@ -4,11 +4,16 @@ import sys
 
 print(sys.argv)
 print(vUtils.getCurDir())
-videos=[]
-videos.append('vinheta2.mp4')    
-videos.append('output\\rev_Nature Beautiful short video 720p HD-668nUCeBHyY.mp4')    
-videos.append('output\\vfstNature Beautiful short video 720p HD-668nUCeBHyY.mp4')
-vUtils.concatFiles(videos, 'output\\Vid_123.mp4')
+
+concat=vUtils.ConcatFilter()
+concat.addMedia('vinheta2.mp4')
+concat.addMedia('output\\rev_Nature Beautiful short video 720p HD-668nUCeBHyY.mp4')
+concat.addMedia('output\\vfstNature Beautiful short video 720p HD-668nUCeBHyY.mp4')
+concat.addFilterToAll('fps=fps=60,scale=1600x900,setdar=16/9')
+params=concat.getFilterString('output.mp4')
+print(params)
+vUtils.execFfmpeg(params)
+sys.exit()
 
 if (sys.argv[1] == '-rev'):
     video=vUtils.moveToFolder(sys.argv[2], 'output')

@@ -6,31 +6,67 @@ from os.path import isfile, join
 import re
 import shutil
 
-class media:
+def sameFile(file1, file2):
+    if ((os.path.abspath(os.path.realpath(file1.upper()))) == (os.path.abspath(os.path.realpath(file2.upper())))):
+        return True
+    else:
+        return False    
+
+class Media:
 
     def __init__(self,mediaPath):
         self.mediaPath=mediaPath
         self.filters=[]
+        self.audioFilters=[]
+        self.hasAudio=True
 
-class concatFilter:
+    def addFilter(self, filter):
+        self.filters.append(filter)
+
+    def addAudioFilter(self, filter):
+        self.audioFilters.append(filter)
+
+class ConcatFilter:
 
     def __init__(self):
         self.mediaList=[]
 
+    def addMedia(self, mediaPath, hasAudio=True):
+        media = Media(mediaPath)
+        media.hasAudio=hasAudio
+        self.mediaList.append(media)
+
+    def addFilter(self, mediaPath, filter):
+        for m in self.mediaList():
+            if sameFile(m.mediaPath, mediaPath):
+                m.addFilter(filter)
+                return
+
+        raise "addFilter: Media não encontrada!"
+
     def getFilterString(self, output):
         inputs = ''
-        param1 = ''
+        videoFilters = ''
+        audioFilters = ''
         param2 = ''
         cnt=0
         for m in self.mediaList:
-            inputs = inputs +' -i "'+m+'" '
-            for f in self.m.filters:
-                param1 = param1+'[{0}]'+f+'[{1}];'.format(cnt, 'v'+str(cnt))
-                param2 = param2+'[{0}]'.format('v'+str(cnt))
+            inputs = inputs +' -i "'+m.mediaPath+'" '
+            for f in m.filters:
+                videoFilters = videoFilters+'[{0}:v]{1}[v{0}];'.format(cnt, f)
+
+            for a in m.audioFilters:
+                audioFilters = audioFilters+'[{0}:a]{1}[a{0}];'.format(cnt, a)
+
+            param2 = param2+'[{0}]{1}'.format('v'+str(cnt), '[{0}:a]'.format(cnt) if m.hasAudio else '')
 
             cnt=cnt+1
 
-        return = inputs +' -filter_complex "'+param1+' '+param2+' concat=n='+str(cnt)+':v=1:a=0 [v]" -map "[v]"  "{0}"'.format(output)
+        return inputs +' -filter_complex "'+videoFilters+' '+param2+' concat=n='+str(cnt)+':v=1:a=1 [v][a]" -map "[v]" -map "[a]" "{0}"'.format(output)
+
+    def addFilterToAll(self, filter):
+        for m in self.mediaList:
+            m.addFilter(filter)
 
 def tryint(s):
     try:
@@ -173,7 +209,7 @@ def concatFilesDirect(files, output):
         params=inputVideos+' -filter_complex "concat=n={len}:v=1:a=0 [v]" -map "[v]" -y "{output}"'.format(len=len(files), output=output)
         execFfmpeg(params)
 
-def concatFiles(files, output):
+def concatFiles(files, output, copy=True):
         listName='tmp'+getFileName(output, False)+'.txt'
         if isfile(listName):
             os.remove(listName)
@@ -185,8 +221,7 @@ def concatFiles(files, output):
 
         thefile.close()
 
-#        params=' -i "{inputList}" -filter_complex "concat=n={len}:v=1:a=0 [v]" -map "[v]"  "{output}"'.format(inputList=listName, len=len(files), output=output)
-        params='-f concat -safe 0 -i "{inputList}" -y "{output}"'.format(inputList=listName, output=output)
+        params='-f concat -safe 0 -i "{inputList}" {copy} -y "{output}"'.format(inputList=listName, copy='-c copy' if copy else '', output=output)
         execFfmpeg(params)
         
         if isfile(listName):
