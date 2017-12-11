@@ -147,40 +147,19 @@ def doFadeInFadeOut(video):
   rename(video, video+'.bkp')
   return newVid
 
-def changePts(file, pts, prefix=""):
-    if not (prefix==""):
-        newFile=getFilePath(file)+prefix+getFileName(file)
-    else:
-        newFile=file
-
+def changePts(file, pts, output):
     atempo=1.0/pts    
     #params = '-i "{input}" -r 60 -filter:v  "setpts={pts}*PTS" -y "{output}" '.format(input=file, pts=pts, output=newFile)
-    params='-i "{input}" -r 60 -filter_complex "[0:v]setpts={pts}*PTS[v];[0:a]atempo={atempo}[a]" -map "[v]" -map "[a]" -y "{output}"'.format(input=file, pts=pts, atempo=atempo, output=newFile)
+    params='-i "{input}" -r 60 -filter_complex "[0:v]setpts={pts}*PTS[v];[0:a]atempo={atempo}[a]" -map "[v]" -map "[a]" -y "{output}"'.format(input=file, pts=pts, atempo=atempo, output=output)
     execFfmpeg(params)
-    return newFile
   
-def reverse(file, prefix='rev_', removeOriginal=True):   
-        video=getFileName(file)
-
-        if (prefix!='') & (video.startswith(prefix)):
-            return file
-        
-        if (prefix==''):
-            newVideo=getFilePath(file)+'tmp'+video
-        else:        
-            newVideo = getFilePath(file)+prefix+video
-                
-        params = '-i "{0}" -vf reverse -af areverse "{1}" '.format(file, newVideo)  
+def reverse(file,output, removeOriginal=True):   
+        params = '-i "{0}" -vf reverse -af areverse "{1}" '.format(file, output)  
   
         execFfmpeg(params) 
   
-        if (os.path.isfile(newVideo)) & (removeOriginal): 
+        if (os.path.isfile(output)) & (removeOriginal): 
             os.remove(file) 
-
-        if (prefix==''):
-            os.rename(newVideo, file)
-                
-        return newVideo
 		
 def splitVideo(video, tempoVideo=4, outputPrefix='vid'):
         duration = getDuration(video)
@@ -241,28 +220,31 @@ def moveToFolder(source, Folder='output'):
     os.rename(source, newVideo)
     return newVideo
 
-def reverseLongVideo(video):
-        folder=getFilePath(video)+os.path.splitext(getFileName(video))[0]+'tmp\\'
+def getTempFolder(file):
+        folder=getFilePath(file)+os.path.splitext(getFileName(file))[0]+'tmp\\'
         if not os.path.exists(folder):
                 os.makedirs(folder)
 
+        return folder
+
+def addPrefix(file, prefix):
+          return getFilePath(file)+prefix+getFileName(file)
+
+def reverseLongVideo(video, output):
+        folder=getTempFolder(video)
         listVideos=[]
         num=splitVideoKeyFrames(video, folder+'out')
         files = [f for f in listdir(folder) if (isfile(join(folder, f)) and (os.path.splitext(f)[1].lower() in [getExt(video)]))]
         sort_nicely(files, reverse=True)
         for f in files:
                 file=folder+f
-                file=changePts(file, 0.75, 'fast')                
-                fileRev=reverse(file)                
+                fileRev=addPrefix(file, 'rev_')
+                reverse(file, fileRev)                
                 listVideos.append(fileRev)
 
-        output=getFilePath(video)+'rev_'+getFileName(video)
         concatFiles(listVideos, output)
 
-        changePts(video, 0.5, 'fast')
-
-        if (os.path.isfile(output)):
-                shutil.rmtree(folder)
+        shutil.rmtree(folder)
 
         return output
 	    

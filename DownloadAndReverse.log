@@ -1,0 +1,7 @@
+Processing path downloads
+Files found: WORST Natural Disasters  Caught on Camera Hurricane, Tornado, Sandstorm, Hailstorm.mkv,ULTIMATE BEST CRASH TEST COMPILATION _ NEW CARS.mp4,To see the collection of  crashes accident  of  heavy equipment.mkv,The Most Oddly Satisfying Building Demolition Video In The World - Amazing Implosions Explosion.mp4,TOP 10 Accidentes en Fundiciones de Metal.mkv,HYPNOTIC Video Inside Extreme Forging Factory - Kihlbergs Stal AB Hammer Forging.mkv,EXPERIMENT Shredding Stretch Armstrong.mkv,BEST EXPLOSION  caught on tape  Collection.mkv,AMAZING VIDEO COMPILATION OF THINGS MELTING.mkv
+reversing and concating video:downloads\To see the collection of  crashes accident  of  heavy equipment.mkv
+changing pts: C:\Users\Marcelo\Desktop\youtube\Scripts\output\Vid_To see the collection of  crashes accident  of  heavy equipmenttmp\fast_Vid_To see the collection of  crashes accident  of  heavy equipment.mkv
+reversing: C:\Users\Marcelo\Desktop\youtube\Scripts\output\Vid_To see the collection of  crashes accident  of  heavy equipmenttmp\rev_Vid_To see the collection of  crashes accident  of  heavy equipment.mkv
+acelerating: C:\Users\Marcelo\Desktop\youtube\Scripts\output\Vid_To see the collection of  crashes accident  of  heavy equipmenttmp\vfst_Vid_To see the collection of  crashes accident  of  heavy equipment.mkv
+concatenating videos: output\Vid_To see the collection of  crashes accident  of  heavy equipment.mkv
