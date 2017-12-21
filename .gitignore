@@ -1,5 +1,9 @@
 *.mkv
 *.mp4
 output/
+<<<<<<< HEAD
 downloads/
 __pycache__/
+=======
+downloads/
+>>>>>>> d7fb35ea0874b8960c0833cae2a62f3f314979bc
