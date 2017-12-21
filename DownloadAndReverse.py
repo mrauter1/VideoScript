@@ -47,15 +47,20 @@ def reverseAndConcat(video, output):
     
     writeLog('acelerating: '+veryfast)
     changePts(fast, 0.75, veryfast) 
-    videos=[]
-    videos.append(vinheta)   
-    videos.append(reversed)    
-    videos.append(veryfast)
-    writeLog('concatenating videos: '+output)
-    conatMedias(videos, output)
+	
+    concat=ConcatFilter()
+	
+    concat.addMedia(vinheta)   
+    concat.addMedia(reversed)
+    concat.addMedia(veryfast)
+	
+    concat.addFilterToAll('fps=fps=60,scale=1600x900,setdar=16/9')	
 
-    if os.path.isfile(output):
-        shutil.rmtree(tmpFolder)
+    writeLog('concatenating videos: '+output)
+    execFfmpeg(concat.getFilterString(output))
+
+##    if os.path.isfile(output):
+##        shutil.rmtree(tmpFolder)
 
 ## C:\Users\Marcelo\Desktop\youtube\Scripts\DownloadAndReverse.py -revlist "downloads"
 def revcatList(path):
@@ -86,7 +91,7 @@ def downloadList(list):
         execYoutubedl(' -o "'+downPath+'//%(title)s.%(ext)s" "'+l+'"')      
 
 if (sys.argv[1] == '-rev'):
-    reverseAndConcat(sys.argv[2], 'output\\Vid_'+getFileName(video))    
+    reverseAndConcat(sys.argv[2], 'output\\Vid_'+getFileName(sys.argv[2]))    
 elif (sys.argv[1] == '-revlist'):
     revcatList(sys.argv[2])    
 elif (sys.argv[1] == '-dl'):

@@ -1,0 +1,10 @@
+"C:\Videos\Scripts\..\ffmpeg.exe"  -i "vinheta2.mp4"  
+								   -i "C:\Videos\Scripts\output\Vid_Short video clip-nature.mp4tmp\rev_Vid_Short video clip-nature.mp4.mkv"  
+								   -i "C:\Videos\Scripts\output\Vid_Short video clip-nature.mp4tmp\vfst_Vid_Short video clip-nature.mp4.mkv"  
+								   -i "audio.mp3"
+								   -filter_complex 
+								   "[1:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];
+								    [2:v]fps=fps=60,scale=1600x900,setdar=16/9[v2]; 
+								    [v1][v2] concat=n=2:v=1:a=0 [out1];
+									[out1][3:a] concat=n=1:v=1:a=1 [out2][aout2]" 
+								   -map "[out2]" -map "[aout2]" -c:a aac -strict -2 -shortest -y "output\Vid_Short video clip-nature.mp4.mkv"
