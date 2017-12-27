@@ -1,6 +1,7 @@
 from vUtils import *
 import os
 import sys
+import ffmpeg
 
 ##concat=ConcatFilter()
 ##concat.addMedia('vinheta2.mp4')
@@ -21,14 +22,31 @@ def writeLog(text):
 vinheta='vinheta2.mp4'
 downPath='downloads'
 
-def conatMedias(medias, output):
-    concat=ConcatFilter()
+def concatMedias(medias, output):     
+    inputs = []
     for m in medias:
-        concat.addMedia(m)
+        inputs.append(ffmpeg.input(m))
 
-    concat.addFilterToAll('fps=fps=60,scale=1600x900,setdar=16/9')
-    params=concat.getFilterString(output)
-    execFfmpeg(params)
+    ff = (ffmpeg
+        .concat(*inputs)
+        .output(output)
+    )
+
+    print(ff.get_args())
+    ff.run()
+    
+##    (ffmpeg
+##         .concat(input1, input2)
+##         .output(output)
+##         .run()
+##     )
+             
+        
+##        concat.addMedia(m)
+
+##    concat.addFilterToAll('fps=fps=60,scale=1600x900,setdar=16/9')
+##    params=concat.getFilterString(output)
+##    execFfmpeg(params)
 
 def reverseAndConcat(video, output):
     print(video)
@@ -47,7 +65,6 @@ def reverseAndConcat(video, output):
     
     writeLog('acelerating: '+veryfast)
     changePts(fast, 0.75, veryfast) 
-<<<<<<< HEAD
 	
     concat=ConcatFilter()
 	
@@ -62,17 +79,6 @@ def reverseAndConcat(video, output):
 
 ##    if os.path.isfile(output):
 ##        shutil.rmtree(tmpFolder)
-=======
-    videos=[]
-    videos.append(vinheta)   
-    videos.append(reversed)    
-    videos.append(veryfast)
-    writeLog('concatenating videos: '+output)
-    conatMedias(videos, output)
-
-    if os.path.isfile(output):
-        shutil.rmtree(tmpFolder)
->>>>>>> d7fb35ea0874b8960c0833cae2a62f3f314979bc
 
 ## C:\Users\Marcelo\Desktop\youtube\Scripts\DownloadAndReverse.py -revlist "downloads"
 def revcatList(path):
@@ -102,12 +108,13 @@ def downloadList(list):
         writeLog('downloading '+l)
         execYoutubedl(' -o "'+downPath+'//%(title)s.%(ext)s" "'+l+'"')      
 
+m = []
+m.append('C:\\Videos\\Scripts\\slowrev_Nature.mp4')
+m.append('C:\\Videos\\Scripts\\fastrev_Nature.mp4')
+concatMedias(m, 'C:\\Videos\\Scripts\\out.mp4')
+
 if (sys.argv[1] == '-rev'):
-<<<<<<< HEAD
     reverseAndConcat(sys.argv[2], 'output\\Vid_'+getFileName(sys.argv[2]))    
-=======
-    reverseAndConcat(sys.argv[2], 'output\\Vid_'+getFileName(video))    
->>>>>>> d7fb35ea0874b8960c0833cae2a62f3f314979bc
 elif (sys.argv[1] == '-revlist'):
     revcatList(sys.argv[2])    
 elif (sys.argv[1] == '-dl'):
