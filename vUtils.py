@@ -16,33 +16,73 @@ class Media:
 
     def __init__(self,mediaPath):
         self.mediaPath=mediaPath
-        self.filters=[]
-        self.audioFilters=[]
+        self.vFilters=[]
+        self.aFilters=[]
         self.hasAudio=True
+        self.hasVideo=True
 
-    def addFilter(self, filter):
-        self.filters.append(filter)
+    def addVFilter(self, filter):
+        if filter == '':
+            return
+        self.vFilters.append(filter)
 
-    def addAudioFilter(self, filter):
-        self.audioFilters.append(filter)
+    def addAFilter(self, filter):
+        if filter=='':
+            return
+        self.aFilters.append(filter)
+
+class FilterContainer:
+    def __init__(self, origin):
+        self.origin=origin
+        self.filter=''
+        self.label
 
 class ConcatFilter:
 
     def __init__(self):
+        self.audioFormat='aac'
+        self.videoFormat='libx264'
+        self.mapParameters = ''
         self.mediaList=[]
+        self.videoContainerList=[]
+        self.audioContainerList=[]
 
-    def addMedia(self, mediaPath, hasAudio=True):
+    def addMedia(self, mediaPath, hasAudio=True, hasVideo=True):
         media = Media(mediaPath)
         media.hasAudio=hasAudio
+        media.hasVideo=hasVideo
         self.mediaList.append(media)
+        return media
 
-    def addFilter(self, mediaPath, filter):
+    def addVideoContainer(origin, filter)
+        v = 
+
+    def addVFilter(self, mediaPath, filter):
         for m in self.mediaList():
             if sameFile(m.mediaPath, mediaPath):
-                m.addFilter(filter)
+                m.addVFilter(filter)
                 return
 
         raise "addFilter: Media não encontrada!"
+
+    def getLabel(self, prefix, cnt):
+        m = self.mediaList[cnt]    
+    
+        if (prefix == 'v') and (m.hasVideo):
+            if (len(m.vFilters) == 0):
+                return '['+str(cnt)+':v]'
+            else:   
+                return '[v'+str(cnt)+']'
+
+        if (prefix == 'a') and (m.hasAudio):
+            if (len(m.aFilters) == 0):
+                return '['+str(cnt)+':a]'
+            else:
+                return '[a'+str(cnt)+']'
+
+        return ''
+
+    
 
     def getFilterString(self, output):
         inputs = ''
@@ -50,23 +90,39 @@ class ConcatFilter:
         audioFilters = ''
         param2 = ''
         cnt=0
+        videoCount=0
         for m in self.mediaList:
             inputs = inputs +' -i "'+m.mediaPath+'" '
-            for f in m.filters:
-                videoFilters = videoFilters+'[{0}:v]{1}[v{0}];'.format(cnt, f)
 
-            for a in m.audioFilters:
+            if m.hasVideo:
+                videoCount=videoCount+1
+                for v in m.vFilters:
+                    videoFilters = videoFilters+'[{0}:v]{1}[v{0}];'.format(cnt, v)
+
+            for a in m.aFilters:
                 audioFilters = audioFilters+'[{0}:a]{1}[a{0}];'.format(cnt, a)
 
-            param2 = param2+'[{0}]{1}'.format('v'+str(cnt), '[{0}:a]'.format(cnt) if m.hasAudio else '')
+            videoLabel = self.getLabel('v', cnt)
+
+            audioLabel = self.getLabel('a', cnt)
+                
+            param2 = param2+'{0}{1}'.format(videoLabel, audioLabel)
 
             cnt=cnt+1
 
-        return inputs +' -filter_complex "'+videoFilters+' '+param2+' concat=n='+str(cnt)+':v=1:a=1 [v][a]" -map "[v]" -map "[a]" "{0}"'.format(output)
+        formatParameter = ((' -c:v {0}'.format(self.videoFormat) if self.videoFormat != '' else '') +
+                          (' -c:a {0}'.format(self.audioFormat) if self.audioFormat != '' else ''))
 
-    def addFilterToAll(self, filter):
+        return (inputs +' -filter_complex "'+videoFilters+' '+audioFilters+' '+param2+' concat=n='+str(videoCount)+':v=1:a=1 [v][a]" -map "[v]" -map "[a]" '
+                      +'{format} {mapPar} "{output}"'.format(format=formatParameter, mapPar=self.mapParameters, output=output))
+
+    def addVFilterToAll(self, filter):
         for m in self.mediaList:
-            m.addFilter(filter)
+            m.addVFilter(filter)
+
+    def addAFilterToAll(self, filter):
+        for m in self.mediaList:
+            m.addAFilter(filter)
 
 def tryint(s):
     try:
