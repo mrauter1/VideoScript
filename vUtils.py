@@ -14,18 +14,147 @@ def sameFile(file1, file2):
 
 class Media:
 
-    def __init__(self,mediaPath):
+    def __init__(self, mediaPath, inputNo):
         self.mediaPath=mediaPath
         self.filters=[]
         self.audioFilters=[]
         self.hasAudio=True
+        self.hasVideo=True
+        self.vLabel='['+str(inputNo)+':v]'
+        self.aLabel='['+str(inputNo)+':a]'        
 
-    def addFilter(self, filter):
-        self.filters.append(filter)
+    def addFilter(self, filter_):
+        self.filters.append(filter_)
+        self.vLabel=filter_.Label
 
-    def addAudioFilter(self, filter):
-        self.audioFilters.append(filter)
+    def addAudioFilter(self, filter_):
+        self.audioFilters.append(filter_)
+        self.aLabel=filter_.Label
+        
+class Block:
+    def __init__(self, origin=''):
+        self.origin=origin
+        self.Label = ''
+        self.Filter = ''           
 
+    def toStr(self):
+        return '{origin}{filter}{label}'.format(
+                  origin=self.origin,
+                  filter=self.Filter,
+                  label=self.Label)
+               
+class ConcatBlock(Media):
+    def inLabelsStr(self):
+        labels = ''
+        for l in self.inLabels:
+            labels = labels+l
+            
+        return labels        
+                
+    def __init__(self, inLabels, v, a, vOutLabel, aOutLabel):
+        self.inLabels=inLabels
+        self.vOutLabel=vOutLabel
+        self.aOutLabel=aOutLabel
+        self.v=v
+        self.a=a                
+            
+        Block.__init__(self, self.inLabelsStr())     
+        self.Label = vOutLabel+aOutLabel
+        
+    def toStr(self):
+        n=len(self.inLabels) // (self.v+self.a)
+                
+        self.Filter='concat=n='+str(n)+':v='+str(self.v)+':a='+str(self.a)
+        return Block.toStr(self)
+            
+class Filters:
+    def __init__(self):
+        self.blocks = []
+        self.inputs = []
+        self.inputBlock = dict()
+        self.output = []
+        self.lastVideoLabelNum = 0
+        self.lastAudioLabelNum = 0 
+        
+    def lastVideoLabel(self):
+        return '[v{0}]'.format(str(self.lastVideoLabelNum))            
+        
+    def lastAudioLabel(self):
+        return '[a{0}]'.format(str(self.lastAudioLabelNum))        
+        
+    def nextVideoLabel(self):
+        self.lastVideoLabelNum = self.lastVideoLabelNum+1
+        return self.lastVideoLabel()
+    
+    def nextAudioLabel(self):
+        self.lastAudioLabelNum = self.lastAudioLabelNum+1
+        return self.lastAudioLabel()
+
+    def newMediaInput(self, mediaPath):
+        return Media(mediaPath, len(self.inputs))
+            
+    def addInput(self, media):
+        self.inputs.append(media)
+                     
+    
+    def getInputLabel(self, media, tipo):
+        #Tipo = v ou a
+        return '[{0}:{1}]'.format(self.inputs.index(media), tipo)
+        
+    def vFilter(self, origin, filterStr):
+        block = Block(None)
+        block.origin = origin
+        block.Label = self.nextVideoLabel()
+        block.Filter = filterStr
+        self.blocks.append(block)
+        return block
+    
+    def aFilter(self, origin, filterStr):
+        block = Block(None)
+        block.origin=origin
+        block.Label = self.nextAudioLabel()
+        block.Filter = filterStr
+        self.blocks.append(block)
+        return block
+    
+    def vFilterMedia(self, media, filterStr):
+        f = self.vFilter(media.vLabel, filterStr)
+        media.addFilter(f)
+        
+    def aFilterMedia(self, media, filterStr):
+        f = self.aFilter(media.vLabel, filterStr)
+        media.addFilter(f)                               
+    
+    def concat(self, inLabels, v=1, a=1):
+        block = ConcatBlock(inLabels, v, a,  self.nextVideoLabel(), self.nextAudioLabel())
+        self.blocks.append(block)
+        return block
+    
+    def changePts(self, vLabel, aLabel, pts):
+        atempo=1.0/pts            
+        vBlock = self.vFilter(vLabel, 'setpts='+str(pts)+'*PTS')
+        aBlock = self.aFilter(aLabel, 'atempo='+str(atempo))
+        return vBlock, aBlock
+   
+    def getCmdLine(self, output):
+        inputs = ''
+        filters = ''
+        cnt=0
+        for m in self.inputs:
+            inputs = inputs +' -i "'+m.mediaPath+'" '
+            
+        for b in self.blocks:       
+            if filters:
+                filters=filters+';'   
+            filters = filters + b.toStr()
+
+            cnt=cnt+1
+            
+        v=self.lastVideoLabel()
+        a=self.lastAudioLabel()        
+
+        return inputs +' -filter_complex "'+filters+'" -map "'+v+'" -map "'+a+'" "{0}"'.format(output)         
+        
 class ConcatFilter:
 
     def __init__(self):
@@ -103,7 +232,8 @@ def shellExecOutput(cmd):
         return process.stdout
 
 def getFfmpeg():
-	return '"'+getCurDir()+'\\..\\ffmpeg.exe" '
+	#return '"'+getCurDir()+'\\..\\ffmpeg.exe" '
+    return "ffmpeg.exe"
 	
 def execFFprobe(params):
 	shellExec(getFfprobe()+params)
