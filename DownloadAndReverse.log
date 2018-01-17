@@ -53,3 +53,78 @@ changing pts: C:\Videos\Scripts\output\Vid_Short video clip-nature.mp4tmp\fast_V
 reversing: C:\Videos\Scripts\output\Vid_Short video clip-nature.mp4tmp\rev_Vid_Short video clip-nature.mp4.mkv
 acelerating: C:\Videos\Scripts\output\Vid_Short video clip-nature.mp4tmp\vfst_Vid_Short video clip-nature.mp4.mkv
 concatenating videos: output\Vid_Short video clip-nature.mp4.mkv
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+concatenating videos: C:\Videos\Scripts\out.mp4
+12:58:51: reversing: C:\Videos\Scripts\science1tmp\reversed.mkv
+12:58:51: concatenating videos: tout.mp4
+12:58:52: concatenating videos: out.mp4
+12:59:15: reversing: C:\Videos\Scripts\science1tmp\reversed.mkv
+12:59:15: concatenating videos: tout.mp4
+12:59:20: concatenating videos: out.mp4
+13:10:31: reversing: C:\Videos\Scripts\science1tmp\reversed.mkv
+13:10:31: concatenating videos: tout.mp4
+13:10:31: concatenating videos: out.mp4
+13:16:45: reversing: C:\Videos\Scripts\science1tmp\reversed.mkv
+13:16:45: concatenating videos: tout.mp4
+13:16:45: concatenating videos: out.mp4
+13:18:12: reversing: C:\Videos\Scripts\WhatsApp Videotmp\reversed.mkv
+13:18:45: concatenating videos: tout.mp4
+13:22:05: reversing: C:\Videos\Scripts\WhatsApp Videotmp\reversed.mkv
+13:22:41: concatenating videos: tout.mp4
+13:22:41:  -i "vinheta2.mp4"  -i "C:\Videos\Scripts\WhatsApp Videotmp\reversed.mkv"  -i "WhatsApp Video.mp4"  -filter_complex "[0:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];[1:v]setpts=0.75*PTS[v2];[1:a]atempo=1.3333333333333333[a1];[v2]fps=fps=60,scale=1600x900,setdar=16/9[v3];[2:v]setpts=0.5*PTS[v4];[2:a]atempo=2.0[a2];[v4]fps=fps=60,scale=1600x900,setdar=16/9[v5];[v1][0:a][v3][a1][v5][a2]concat=n=3:v=1:a=1[v6][a3]" -map "[v6]" -map "[a3]" "tout.mp4"
+13:25:11: reversing: C:\Videos\Scripts\WhatsApp Videotmp\reversed.mkv
+13:25:49: concatenating videos: tout.mp4
+13:25:49:  -i "vinheta2.mp4"  -i "C:\Videos\Scripts\WhatsApp Videotmp\reversed.mkv"  -i "WhatsApp Video.mp4"  -filter_complex "[0:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];[1:v]setpts=0.75*PTS[v2];[1:a]atempo=1.3333333333333333[a1];[v2]fps=fps=60,scale=1600x900,setdar=16/9[v3];[2:v]setpts=0.5*PTS[v4];[2:a]atempo=2.0[a2];[v4]fps=fps=60,scale=1600x900,setdar=16/9[v5];[v1][0:a][v3][a1][v5][a2]concat=n=3:v=1:a=1[v6][a3]" -map "[v6]" -map "[a3]" "tout.mp4"
+13:29:45: reversing: C:\Videos\Scripts\touttmp\reversed.mkv
+13:30:15: concatenating videos: tout.mp4
+13:30:15:  -i "vinheta2.mp4"  -i "C:\Videos\Scripts\touttmp\reversed.mkv"  -i "WhatsApp Video.mp4"  -filter_complex "[0:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];[1:v]setpts=0.75*PTS[v2];[1:a]atempo=1.3333333333333333[a1];[v2]fps=fps=60,scale=1600x900,setdar=16/9[v3];[2:v]setpts=0.5*PTS[v4];[2:a]atempo=2.0[a2];[v4]fps=fps=60,scale=1600x900,setdar=16/9[v5];[v1][0:a][v3][a1][v5][a2]concat=n=3:v=1:a=1[v6][a3]" -map "[v6]" -map "[a3]" "tout.mp4"
+13:50:36: reversing: C:\Videos\Scripts\touttmp\reversed.mkv
+13:50:44: concatenating videos: tout.mp4
+13:50:44:  -i "vinheta2.mp4"  -i "C:\Videos\Scripts\touttmp\reversed.mkv"  -i "video_withaudio.mp4"  -filter_complex "[0:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];[1:v]setpts=0.75*PTS[v2];[1:a]atempo=1.3333333333333333[a1];[v2]fps=fps=60,scale=1600x900,setdar=16/9[v3];[2:v]setpts=0.5*PTS[v4];[2:a]atempo=2.0[a2];[v4]fps=fps=60,scale=1600x900,setdar=16/9[v5];[v1][0:a][v3][a1][v5][a2]concat=n=3:v=1:a=1[v6][a3]" -map "[v6]" -map "[a3]" "tout.mp4"
+14:05:03: reversing: C:\Videos\Scripts\touttmp\reversed.mkv
+14:05:10: concatenating videos: tout.mp4
+14:05:10:  -i "vinheta2.mp4"  -i "C:\Videos\Scripts\touttmp\reversed.mkv"  -i "video_withaudio.mp4"  -filter_complex "[0:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];[1:v]setpts=0.75*PTS[v2];[1:a]atempo=1.3333333333333333[a1];[v2]fps=fps=60,scale=1600x900,setdar=16/9[v3];[2:v]setpts=0.5*PTS[v4];[2:a]atempo=2.0[a2];[v4]fps=fps=60,scale=1600x900,setdar=16/9[v5];[v1][0:a][v3][a1][v5][a2]concat=n=3:v=1:a=1[v6][a3]" -map "[v6]" -map "[a3]" "tout.mp4"
+14:18:17: reversing: C:\Videos\Scripts\touttmp\reversed.mkv
+14:18:47: concatenating videos: tout.mp4
+14:18:47:  -i "vinheta2.mp4"  -i "C:\Videos\Scripts\touttmp\reversed.mkv"  -i "WhatsApp Video.mp4"  -filter_complex "[0:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];[1:v]setpts=0.75*PTS[v2];[1:a]atempo=1.3333333333333333[a1];[v2]fps=fps=60,scale=1600x900,setdar=16/9[v3];[2:v]setpts=0.5*PTS[v4];[2:a]atempo=2.0[a2];[v4]fps=fps=60,scale=1600x900,setdar=16/9[v5];[v1][0:a][v3][a1][v5][a2]concat=n=3:v=1:a=1[v6][a3]" -map "[v6]" -map "[a3]" "tout.mp4"
+14:38:41: reversing: C:\Videos\Scripts\touttmp\reversed.mkv
+14:39:10: concatenating videos: tout.mp4
+14:39:10:  -i "vinheta2.mp4"  -i "C:\Videos\Scripts\touttmp\reversed.mkv"  -i "WhatsApp Video.mp4"  -filter_complex "[0:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];[1:v]setpts=0.75*PTS[v2];[1:a]atempo=1.333[a1];[v2]fps=fps=60,scale=1600x900,setdar=16/9[v3];[2:v]setpts=0.5*PTS[v4];[2:a]atempo=2.000[a2];[v4]fps=fps=60,scale=1600x900,setdar=16/9[v5];[v1][0:a][v3][a1][v5][a2]concat=n=3:v=1:a=1[v6][a3]" -map "[v6]" -map "[a3]" "tout.mp4"
+15:04:41: reversing: C:\Videos\Scripts\touttmp\reversed.mkv
+15:05:16: concatenating videos: tout.mp4
+15:05:16:  -i "vinheta2.mp4"  -i "C:\Videos\Scripts\touttmp\reversed.mkv"  -i "WhatsApp Video.mp4"   {inOptions} -filter_complex "[0:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];[1:v]setpts=0.75*PTS[v2];[1:a]atempo=1.333[a1];[v2]fps=fps=60,scale=1600x900,setdar=16/9[v3];[2:v]setpts=0.5*PTS[v4];[2:a]atempo=2.000[a2];[v4]fps=fps=60,scale=1600x900,setdar=16/9[v5];[v1][0:a][v3][a1][v5][a2]concat=n=3:v=1:a=1[v6][a3]" -map "[v6]" -map "[a3]" -c:v libx264 -c:a aac -crf 23 -preset medium -vf -ar 44100 -ac 2 -b:a 192k -f format=yuv420p  "tout.mp4"
+15:10:13: reversing: C:\Videos\Scripts\touttmp\reversed.mkv
+15:10:13: concatenating videos: tout.mp4
+15:10:13:  -i "vinheta2.mp4"  -i "C:\Videos\Scripts\touttmp\reversed.mkv"  -i "WhatsApp Video.mp4"   -r 60 -filter_complex "[0:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];[1:v]setpts=0.75*PTS[v2];[1:a]atempo=1.333[a1];[v2]fps=fps=60,scale=1600x900,setdar=16/9[v3];[2:v]setpts=0.5*PTS[v4];[2:a]atempo=2.000[a2];[v4]fps=fps=60,scale=1600x900,setdar=16/9[v5];[v1][0:a][v3][a1][v5][a2]concat=n=3:v=1:a=1[v6][a3]" -map "[v6]" -map "[a3]" -c:v libx264 -c:a aac -crf 23 -preset medium -vf -ar 44100 -ac 2 -b:a 192k -f format=yuv420p  tout.mp4
+15:10:32: reversing: C:\Videos\Scripts\touttmp\reversed.mkv
+15:11:02: concatenating videos: tout.mp4
+15:11:02:  -i "vinheta2.mp4"  -i "C:\Videos\Scripts\touttmp\reversed.mkv"  -i "WhatsApp Video.mp4"   -r 60 -filter_complex "[0:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];[1:v]setpts=0.75*PTS[v2];[1:a]atempo=1.333[a1];[v2]fps=fps=60,scale=1600x900,setdar=16/9[v3];[2:v]setpts=0.5*PTS[v4];[2:a]atempo=2.000[a2];[v4]fps=fps=60,scale=1600x900,setdar=16/9[v5];[v1][0:a][v3][a1][v5][a2]concat=n=3:v=1:a=1[v6][a3]" -map "[v6]" -map "[a3]" -c:v libx264 -c:a aac -crf 23 -preset medium -vf -ar 44100 -ac 2 -b:a 192k -f format=yuv420p  tout.mp4
+15:16:28: reversing: C:\Videos\Scripts\touttmp\reversed.mkv
+15:17:01: concatenating videos: tout.mp4
+15:17:01:  -i "vinheta2.mp4"  -i "C:\Videos\Scripts\touttmp\reversed.mkv"  -i "WhatsApp Video.mp4"   -r 60 -filter_complex "[0:v]fps=fps=60,scale=1600x900,setdar=16/9[v1];[1:v]setpts=0.75*PTS[v2];[1:a]atempo=1.333[a1];[v2]fps=fps=60,scale=1600x900,setdar=16/9[v3];[2:v]setpts=0.5*PTS[v4];[2:a]atempo=2.000[a2];[v4]fps=fps=60,scale=1600x900,setdar=16/9[v5];[v1][0:a][v3][a1][v5][a2]concat=n=3:v=1:a=1[v6][a3]" -map "[v6]" -map "[a3]" -c:v libx264 -c:a aac -crf 23 -preset medium -vf -ac 2 -b:a 192k -f format=yuv420p  tout.mp4
