@@ -11,24 +11,25 @@ def sameFile(file1, file2):
         return True
     else:
         return False    
-
+    
 class Media:
 
     def __init__(self, mediaPath, inputNo):
         self.mediaPath=mediaPath
-        self.filters=[]
-        self.audioFilters=[]
+        self.vFilters=[]
+        self.aFilters=[]
         self.hasAudio=True
         self.hasVideo=True
+
         self.vLabel='['+str(inputNo)+':v]'
         self.aLabel='['+str(inputNo)+':a]'        
 
     def addFilter(self, filter_):
-        self.filters.append(filter_)
+        self.vFilters.append(filter_)
         self.vLabel=filter_.Label
 
     def addAudioFilter(self, filter_):
-        self.audioFilters.append(filter_)
+        self.aFilters.append(filter_)
         self.aLabel=filter_.Label
         
 class Block:
@@ -74,7 +75,9 @@ class Filters:
         self.inputBlock = dict()
         self.output = []
         self.lastVideoLabelNum = 0
-        self.lastAudioLabelNum = 0 
+        self.lastAudioLabelNum = 0
+        self.inOptions=' -r 60'
+        self.outOptions='-c:v libx264 -c:a aac -crf 23 -preset medium -vf -ac 2 -b:a 192k -f format=yuv420p ' 
         
     def lastVideoLabel(self):
         return '[v{0}]'.format(str(self.lastVideoLabelNum))            
@@ -91,7 +94,9 @@ class Filters:
         return self.lastAudioLabel()
 
     def newMediaInput(self, mediaPath):
-        return Media(mediaPath, len(self.inputs))
+        m = Media(mediaPath, len(self.inputs))
+        self.addInput(m)
+        return m
             
     def addInput(self, media):
         self.inputs.append(media)
@@ -131,9 +136,9 @@ class Filters:
         return block
     
     def changePts(self, vLabel, aLabel, pts):
-        atempo=1.0/pts            
+        atempo=round(1.0/pts,3)            
         vBlock = self.vFilter(vLabel, 'setpts='+str(pts)+'*PTS')
-        aBlock = self.aFilter(aLabel, 'atempo='+str(atempo))
+        aBlock = self.aFilter(aLabel, 'atempo='+str("%.3f" % atempo))
         return vBlock, aBlock
    
     def getCmdLine(self, output):
@@ -153,25 +158,51 @@ class Filters:
         v=self.lastVideoLabel()
         a=self.lastAudioLabel()        
 
-        return inputs +' -filter_complex "'+filters+'" -map "'+v+'" -map "'+a+'" "{0}"'.format(output)         
+        return inputs +' '+self.inOptions+' -filter_complex "'+filters+'" -map "'+v+'" -map "'+a+'" '+self.outOptions+' '+output
         
 class ConcatFilter:
 
     def __init__(self):
+        self.audioFormat='aac'
+        self.videoFormat='libx264'
+        self.mapParameters = ''
         self.mediaList=[]
+        self.videoContainerList=[]
+        self.audioContainerList=[]
 
-    def addMedia(self, mediaPath, hasAudio=True):
-        media = Media(mediaPath)
+    def addMedia(self, mediaPath, hasAudio=True, hasVideo=True):
+        media = Media(mediaPath, 0)
         media.hasAudio=hasAudio
+        media.hasVideo=hasVideo
         self.mediaList.append(media)
+        return media
 
-    def addFilter(self, mediaPath, filter):
+    def addVFilter(self, mediaPath, filter):
         for m in self.mediaList():
             if sameFile(m.mediaPath, mediaPath):
-                m.addFilter(filter)
+                m.addVFilter(filter)
                 return
 
         raise "addFilter: Media não encontrada!"
+
+    def getLabel(self, prefix, cnt):
+        m = self.mediaList[cnt]    
+    
+        if (prefix == 'v') and (m.hasVideo):
+            if (len(m.vFilters) == 0):
+                return '['+str(cnt)+':v]'
+            else:   
+                return '[v'+str(cnt)+']'
+
+        if (prefix == 'a') and (m.hasAudio):
+            if (len(m.aFilters) == 0):
+                return '['+str(cnt)+':a]'
+            else:
+                return '[a'+str(cnt)+']'
+
+        return ''
+
+    
 
     def getFilterString(self, output):
         inputs = ''
@@ -179,23 +210,39 @@ class ConcatFilter:
         audioFilters = ''
         param2 = ''
         cnt=0
+        videoCount=0
         for m in self.mediaList:
             inputs = inputs +' -i "'+m.mediaPath+'" '
-            for f in m.filters:
-                videoFilters = videoFilters+'[{0}:v]{1}[v{0}];'.format(cnt, f)
 
-            for a in m.audioFilters:
+            if m.hasVideo:
+                videoCount=videoCount+1
+                for v in m.vFilters:
+                    videoFilters = videoFilters+'[{0}:v]{1}[v{0}];'.format(cnt, v)
+
+            for a in m.aFilters:
                 audioFilters = audioFilters+'[{0}:a]{1}[a{0}];'.format(cnt, a)
 
-            param2 = param2+'[{0}]{1}'.format('v'+str(cnt), '[{0}:a]'.format(cnt) if m.hasAudio else '')
+            videoLabel = self.getLabel('v', cnt)
+
+            audioLabel = self.getLabel('a', cnt)
+                
+            param2 = param2+'{0}{1}'.format(videoLabel, audioLabel)
 
             cnt=cnt+1
 
-        return inputs +' -filter_complex "'+videoFilters+' '+param2+' concat=n='+str(cnt)+':v=1:a=1 [v][a]" -map "[v]" -map "[a]" "{0}"'.format(output)
+        formatParameter = ((' -c:v {0}'.format(self.videoFormat) if self.videoFormat != '' else '') +
+                          (' -c:a {0}'.format(self.audioFormat) if self.audioFormat != '' else ''))
 
-    def addFilterToAll(self, filter):
+        return (inputs +' -filter_complex "'+videoFilters+' '+audioFilters+' '+param2+' concat=n='+str(videoCount)+':v=1:a=1 [v][a]" -map "[v]" -map "[a]" '
+                      +'{format} {mapPar} "{output}"'.format(format=formatParameter, mapPar=self.mapParameters, output=output))
+
+    def addVFilterToAll(self, filter):
         for m in self.mediaList:
-            m.addFilter(filter)
+            m.addVFilter(filter)
+
+    def addAFilterToAll(self, filter):
+        for m in self.mediaList:
+            m.addAFilter(filter)
 
 def tryint(s):
     try:
@@ -233,7 +280,7 @@ def shellExecOutput(cmd):
 
 def getFfmpeg():
 	#return '"'+getCurDir()+'\\..\\ffmpeg.exe" '
-    return "ffmpeg.exe"
+    return "ffmpeg.exe "
 	
 def execFFprobe(params):
 	shellExec(getFfprobe()+params)
@@ -278,7 +325,7 @@ def doFadeInFadeOut(video):
   return newVid
 
 def changePts(file, pts, output):
-    atempo=1.0/pts    
+    atempo=round(1.0/pts,3)    
     #params = '-i "{input}" -r 60 -filter:v  "setpts={pts}*PTS" -y "{output}" '.format(input=file, pts=pts, output=newFile)
     params='-i "{input}" -r 60 -filter_complex "[0:v]setpts={pts}*PTS[v];[0:a]atempo={atempo}[a]" -map "[v]" -map "[a]" -y "{output}"'.format(input=file, pts=pts, atempo=atempo, output=output)
     execFfmpeg(params)
