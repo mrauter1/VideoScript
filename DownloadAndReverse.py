@@ -1,6 +1,7 @@
 from vUtils import *
 import os
 import sys
+
 import time
 from random import shuffle
 
@@ -20,17 +21,42 @@ def writeLog(text):
     file.write(time.strftime("%H:%M:%S: ")+text+'\n')
     file.close()
 
-vinheta='vinheta2.mp4'
-downPath='downloads'
+from inspect import getmembers
+from pprint import pprint
 
-def conatMedias(medias, output):
-    concat=ConcatFilter()
-    for m in medias:
-        concat.addMedia(m)
+def dump(obj):
+  '''return a printable representation of an object for debugging'''
+  newobj=obj
+  if '__dict__' in dir(obj):
+    newobj=obj.__dict__
+    if ' object at ' in str(obj) and not newobj.has_key('__type__'):
+      newobj['__type__']=str(obj)
+    for attr in newobj:
+      newobj[attr]=dump(newobj[attr])
+  return newobj
 
-    concat.addFVilterToAll('fps=fps=60,scale=1600x900,setdar=16/9')
-    params=concat.getFilterString(output)
-    execFfmpeg(params)
+vinheta = 'vinheta2.mp4'
+downPath = 'downloads'
+
+def concatMedias2(medias, output):
+    f=Filters()
+    
+    labels=[]
+    
+    for m in medias:    
+        media = f.newMediaInput(m)
+        f.addInput(media)
+        v = f.vFilter(media.vLabel, 'fps=fps=60,scale=1600x900,setdar=16/9')     
+        labels.append(v.Label)
+        labels.append(media.aLabel)                
+       
+    c = f.concat(labels)
+    
+    f.changePts(c.vOutLabel, c.aOutLabel, 0.5)
+
+    writeLog('concatenating videos: ' + output)
+    print(f.getCmdLine(output))
+    execFfmpeg(f.getCmdLine(output))    
 
 def addMusicsToVideos(videoList, audioPath, concat):
     writeLog('Adding music to video. Audio path: '+audioPath)
@@ -56,68 +82,72 @@ def addMusicsToVideos(videoList, audioPath, concat):
 def reverseAndConcat(video, output):
     print(video)
     
-    writeLog('reversing and concating video:' +video)
-    tmpFolder=getTempFolder(output)
-    fast=tmpFolder+'fast_'+getFileName(output)
+    tmpFolder=getTempFolder(video)
 
-    writeLog('changing pts: '+fast)
-#    changePts(video, 0.75, fast)
-    reversed=tmpFolder+'rev_'+getFileName(output)
-    
+    reversed=tmpFolder+'reversed.mkv'
     writeLog('reversing: '+reversed)
-#    reverseLongVideo(fast, reversed)
-    veryfast=tmpFolder+'vfst_'+getFileName(output)
-    
-    writeLog('acelerating: '+veryfast)
-#    changePts(fast, 0.75, veryfast) 
-    videos=[]
-    ##videos.append(vinheta)
+    reverseLongVideo(video, reversed)
 
-    writeLog('concatenating videos: '+output)
-    concat=ConcatFilter()
-    concat.mapParameters=' -y'
-    concat.addMedia(vinheta)    
-    r=concat.addMedia(reversed, False)
-    f=concat.addMedia(veryfast, False)
-    #revvideo=tmpFolder+'final'
-    addMusicsToVideos([reversed,veryfast], '..//audio//', concat)
-    execFfmpeg(concat.getFilterString(output))
-##
-##    conatMedias(videos, revvideo)
-##
-##    vsound=tmpFolder+'sound'
-##
-##    addMusicsToVideo(output, '..//audio//', vsound)
-##
-##    writeLog('adicionando vinheta: '+output)
-##    concat=ConcatFilter()
-##    concat.mapParameters=' -y'     
-##    concat.addMedia(vinheta)
-##    concat.addMedia(revvideo)
-##    concat.addFVilterToAll('fps=fps=60,scale=1600x900,setdar=16/9')
-##    execFfmpeg(concat.getFilterString(output))
+    f=Filters()
+
+    vin=f.newMediaInput(vinheta)
+    f.vFilterMedia(vin, 'fps=fps=60,scale=1600x900,setdar=16/9')
+    rev=f.newMediaInput(reversed)
+    fast=f.newMediaInput(video)
+
+    f.addInput(fast)
     
+    v1, a1 = f.changePts(rev.vLabel, rev.aLabel, 0.75)
+    v1 = f.vFilter(v1.Label, 'fps=fps=60,scale=1600x900,setdar=16/9')
+    v2, a2 = f.changePts(fast.vLabel, fast.aLabel, 0.5)
+    v2 = f.vFilter(v2.Label, 'fps=fps=60,scale=1600x900,setdar=16/9')
+    
+    labels=[]
+    labels.append(vin.vLabel)
+    labels.append(vin.aLabel)
+    labels.append(v1.Label)
+    labels.append(a1.Label)
+    labels.append(v2.Label)
+    labels.append(a2.Label)                  
+       
+    c = f.concat(labels)
+
+    writeLog('concatenating videos: ' + output)
+    print(f.getCmdLine(output))
+    execFfmpeg(f.getCmdLine(output))        
+
+#     writeLog('concatenating videos: '+output)
+#     concat=ConcatFilter()
+#     concat.mapParameters=' -y'
+#     concat.addMedia(vinheta)    
+#     r=concat.addMedia(reversed, False)
+#     f=concat.addMedia(veryfast, False)
+#     #revvideo=tmpFolder+'final'
+#     addMusicsToVideos([reversed,veryfast], '..//audio//', concat)
+#     execFfmpeg(concat.getFilterString(output))
+
     if os.path.isfile(output):
         shutil.rmtree(tmpFolder)
 
-## C:\Users\Marcelo\Desktop\youtube\Scripts\DownloadAndReverse.py -revlist "downloads"
+# # C:\Users\Marcelo\Desktop\youtube\Scripts\DownloadAndReverse.py -revlist "downloads"
 def revcatList(path):
-    writeLog('Processing path '+path)
+    writeLog('Processing path ' + path)
     files = [f for f in os.listdir(path) if (os.path.isfile(os.path.join(path, f)) and (os.path.splitext(f)[1].lower() in ['.mkv', '.mp4']))]
     sort_nicely(files, reverse=True)
 
-    writeLog('Files found: '+','.join(files))    
+    writeLog('Files found: ' + ','.join(files))    
     
     for f in files:
-        video=os.path.join(path, f)
-        output='output\\Vid_'+getFileName(video)
+        video = os.path.join(path, f)
+        output = 'output\\Vid_' + getFileName(video)
         if (os.path.isfile(output)):
             continue
         
         reverseAndConcat(video, output)
 
+
 def downloadList(list):
-    writeLog('downloading list '+list)
+    writeLog('downloading list ' + list)
     with open(list) as f:
         lines = f.read().splitlines()
 
@@ -129,7 +159,15 @@ def downloadList(list):
         execYoutubedl(' -o "'+downPath+'//%(title)s.%(ext)s" "'+l+'"')      
 
 #addMusicsToVideo('science1.mkv', '..//audio//', 'sc2.mkv')
-reverseAndConcat('science1.mkv', 'sc2.mkv')
+#reverseAndConcat('science1.mkv', 'sc2.mkv')
+
+reverseAndConcat('science1.mkv', 'tout.mp4')
+
+m = []
+m.append(vinheta)
+m.append('science1.mkv')
+m.append('sc2.mkv')
+concatMedias2(m, 'out.mp4')
 
 if (len(sys.argv) > 1):
     if (sys.argv[1] == '-rev'):
@@ -142,6 +180,3 @@ if (len(sys.argv) > 1):
         downloadList(sys.argv[2])
     else:
         execYoutubedl(' -o "'+downPath+'//%(title)s.%(ext)s" "'+sys.argv[1]+'" --exec "'+__file__+' -rev {}" ')
-
-
-
