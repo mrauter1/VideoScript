@@ -17,7 +17,7 @@ class Media:
     def __init__(self, mediaPath, inputNo):
         self.mediaPath=mediaPath
         self.vFilters=[]
-        self.aFilters=[]
+        self.audioFilters=[]
         self.hasAudio=True
         self.hasVideo=True
 
@@ -29,7 +29,7 @@ class Media:
         self.vLabel=filter_.Label
 
     def addAudioFilter(self, filter_):
-        self.aFilters.append(filter_)
+        self.audioFilters.append(filter_)
         self.aLabel=filter_.Label
         
 class Block:
@@ -114,7 +114,7 @@ class Filters:
         self.blocks.append(block)
         return block
     
-    def aFilter(self, origin, filterStr):
+    def audioFilter(self, origin, filterStr):
         block = Block(None)
         block.origin=origin
         block.Label = self.nextAudioLabel()
@@ -126,8 +126,8 @@ class Filters:
         f = self.vFilter(media.vLabel, filterStr)
         media.addFilter(f)
         
-    def aFilterMedia(self, media, filterStr):
-        f = self.aFilter(media.vLabel, filterStr)
+    def audioFilterMedia(self, media, filterStr):
+        f = self.audioFilter(media.vLabel, filterStr)
         media.addFilter(f)                               
     
     def concat(self, inLabels, v=1, a=1):
@@ -138,7 +138,7 @@ class Filters:
     def changePts(self, vLabel, aLabel, pts):
         atempo=round(1.0/pts,3)            
         vBlock = self.vFilter(vLabel, 'setpts='+str(pts)+'*PTS')
-        aBlock = self.aFilter(aLabel, 'atempo='+str("%.3f" % atempo))
+        aBlock = self.audioFilter(aLabel, 'atempo='+str("%.3f" % atempo))
         return vBlock, aBlock
    
     def getCmdLine(self, output):
@@ -180,7 +180,9 @@ class ConcatFilter:
     def addVFilter(self, mediaPath, filter):
         for m in self.mediaList():
             if sameFile(m.mediaPath, mediaPath):
-                m.addVFilter(filter)
+                b=Block()
+                b.Filte = filter
+                m.addVFilter(b)
                 return
 
         raise "addFilter: Media não encontrada!"
@@ -195,7 +197,7 @@ class ConcatFilter:
                 return '[v'+str(cnt)+']'
 
         if (prefix == 'a') and (m.hasAudio):
-            if (len(m.aFilters) == 0):
+            if (len(m.audioFilters) == 0):
                 return '['+str(cnt)+':a]'
             else:
                 return '[a'+str(cnt)+']'
@@ -217,10 +219,10 @@ class ConcatFilter:
             if m.hasVideo:
                 videoCount=videoCount+1
                 for v in m.vFilters:
-                    videoFilters = videoFilters+'[{0}:v]{1}[v{0}];'.format(cnt, v)
+                    videoFilters = videoFilters+'[{0}:v]{1}[v{0}];'.format(cnt, v.Filter)
 
-            for a in m.aFilters:
-                audioFilters = audioFilters+'[{0}:a]{1}[a{0}];'.format(cnt, a)
+            for a in m.audioFilters:
+                audioFilters = audioFilters+'[{0}:a]{1}[a{0}];'.format(cnt, a.Filter)
 
             videoLabel = self.getLabel('v', cnt)
 
@@ -279,8 +281,8 @@ def shellExecOutput(cmd):
         return process.stdout
 
 def getFfmpeg():
-	#return '"'+getCurDir()+'\\..\\ffmpeg.exe" '
-    return "ffmpeg.exe "
+	return '"'+getCurDir()+'\\..\\ffmpeg.exe" '
+#return "ffmpeg.exe "
 	
 def execFFprobe(params):
 	shellExec(getFfprobe()+params)
@@ -309,6 +311,8 @@ def getFilePath(file):
         return os.path.dirname(os.path.abspath(file))+'\\'
 
 	
+outParams='-c:v libx264 -c:a aac -b:a 192k -crf 23 '
+
 def doFadeInFadeOut(video):
   if ("fifo_" in video):
 	  return video
@@ -327,11 +331,18 @@ def doFadeInFadeOut(video):
 def changePts(file, pts, output):
     atempo=round(1.0/pts,3)    
     #params = '-i "{input}" -r 60 -filter:v  "setpts={pts}*PTS" -y "{output}" '.format(input=file, pts=pts, output=newFile)
-    params='-i "{input}" -r 60 -filter_complex "[0:v]setpts={pts}*PTS[v];[0:a]atempo={atempo}[a]" -map "[v]" -map "[a]" -y "{output}"'.format(input=file, pts=pts, atempo=atempo, output=output)
+    
+    params=('-i "{input}" -r 60 -filter_complex "[0:v]setpts={pts}*PTS[av];[av]scale=1600:900,setdar=16/9[v];[0:a]atempo={atempo}[a]" -map "[v]" -map "[a]" {outParams} -y "{output}"'.
+            format(input=file, pts=pts, atempo=atempo, outParams=outParams, output=output))
     execFfmpeg(params)
+    
+def convertCodec(file, output):
+        params = '-i "{0}" -vf "scale=1600:900,setdar=16/9" {1} "{2}" '.format(file, outParams, output)  
+  
+        execFfmpeg(params)   
   
 def reverse(file,output, removeOriginal=True):   
-        params = '-i "{0}" -vf reverse -af areverse "{1}" '.format(file, output)  
+        params = '-i "{0}" -vf "reverse,scale=1600:900,setdar=16/9" -af areverse {1} "{2}" '.format(file, outParams, output)  
   
         execFfmpeg(params) 
   

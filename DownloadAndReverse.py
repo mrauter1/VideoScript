@@ -76,7 +76,9 @@ def addMusicsToVideos(videoList, audioPath, concat):
         m=concat.addMedia(audio, True, False)
         if (totalAudioTime >= videoTime):
             end=aduration-(totalAudioTime-videoTime)
-            m.addAFilter('atrim=0:'+str(end))
+            b=Block()
+            b.Filter='atrim=0:'+str(end)
+            m.addAudioFilter(b)
             break
 
 def reverseAndConcat(video, output):
@@ -130,7 +132,51 @@ def reverseAndConcat(video, output):
 #    if os.path.isfile(output):
 #        shutil.rmtree(tmpFolder)
 
-# # C:\Users\Marcelo\Desktop\youtube\Scripts\DownloadAndReverse.py -revlist "downloads"
+def reverseAndConcat2(video, output):
+    print(video)
+    
+    writeLog('reversing and concating video:' +video)
+    tmpFolder=getTempFolder(output)
+    fast=tmpFolder+'fast_'+getFileName(output)
+    
+    #convertCodec(vinheta, getFileName(vinheta,False)+'.'+getExt(vinheta))
+
+    writeLog('changing pts: '+fast)
+#    changePts(video, 0.75, fast)
+    
+    reversed=tmpFolder+'rev_'+getFileName(output) 
+    writeLog('reversing: '+reversed)   
+#    reverseLongVideo(fast, reversed)
+    
+    veryfast=tmpFolder+'vfst_'+getFileName(output)  
+    writeLog('acelerating: '+veryfast)  
+ #   changePts(fast, 0.75, veryfast) 
+    
+    input()
+        
+    out1=tmpFolder+'out1_'+getFileName(output)     
+        
+    writeLog('concatenating videos: '+out1)    
+    concat=ConcatFilter()
+    concat.mapParameters=' -y'    
+    r=concat.addMedia(reversed, False)
+    f=concat.addMedia(veryfast, False)
+    addMusicsToVideos([reversed,veryfast], '..//audio//', concat)
+    #revvideo=tmpFolder+'final'
+
+    print(concat.getFilterString(out1))
+    input()
+    execFfmpeg(concat.getFilterString(out1))
+    
+    concat=ConcatFilter()
+    concat.mapParameters=' -y'
+    concat.addMedia(vinheta)
+    concat.addMedia(out1)
+    execFfmpeg(concat.getFilterString(out1))    
+        
+##    if os.path.isfile(output):
+##        shutil.rmtree(tmpFolder)
+
 def revcatList(path):
     writeLog('Processing path ' + path)
     files = [f for f in os.listdir(path) if (os.path.isfile(os.path.join(path, f)) and (os.path.splitext(f)[1].lower() in ['.mkv', '.mp4']))]
@@ -163,7 +209,7 @@ def downloadList(list):
 #reverseAndConcat('science1.mkv', 'sc2.mkv')
 
 #reverseAndConcat('video_withaudio.mp4', 'tout.mp4')
-reverseAndConcat('WhatsApp Video.mp4', 'tout.mp4')
+reverseAndConcat2('science1.mkv', 'tout.mp4')
 
 m = []
 m.append(vinheta)
