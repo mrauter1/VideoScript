@@ -1,10 +1,10 @@
-from subprocess import Popen
-import sys
-import os 
 from os import rename, listdir
+import os 
 from os.path import isfile, join
 import re
 import shutil
+from subprocess import Popen
+import sys
 
 def sameFile(file1, file2):
     if ((os.path.abspath(os.path.realpath(file1.upper()))) == (os.path.abspath(os.path.realpath(file2.upper())))):
@@ -77,7 +77,8 @@ class Filters:
         self.lastVideoLabelNum = 0
         self.lastAudioLabelNum = 0
         self.inOptions=' -r 60'
-        self.outOptions='-c:v libx264 -c:a aac -crf 23 -preset medium -vf -ac 2 -b:a 192k -f format=yuv420p ' 
+        #self.outOptions='-c:v libx264 -c:a aac -crf 23 -preset medium -vf -ac 2 -b:a 192k -f format=yuv420p '
+        self.outOptions=' -y ' 
         
     def lastVideoLabel(self):
         return '[v{0}]'.format(str(self.lastVideoLabelNum))            
@@ -311,7 +312,7 @@ def getFilePath(file):
         return os.path.dirname(os.path.abspath(file))+'\\'
 
 	
-outParams='-c:v libx264 -c:a aac -b:a 192k -crf 23 '
+outParams='-c:v libx264 -c:a aac -b:a 192k -crf 23 23 '
 
 def doFadeInFadeOut(video):
   if ("fifo_" in video):
@@ -319,10 +320,10 @@ def doFadeInFadeOut(video):
 	  
   newVid = 'fifo_'+video   
   params = '-i {0} -sseof -1 -copyts -i {0} -filter_complex "[1]fade=out:0:10[t];[0][t]overlay,fade=in:0:30[v]" '.format(video)  
-  params=params+'-map "[v]" -c:v libx264 -crf 22 -preset veryfast -shortest {1}'.format(video, newVid)  
+  params=params+'-map "[v]" -c:v libx264 -crf 23 22 -preset veryfast -shortest {1}'.format(video, newVid)  
 # fade with audio  
 #  params = '-i {0} -sseof -1 -copyts -i {0} -filter_complex "[1]fade=out:0:10[t];[0][t]overlay,fade=in:0:30[v]; anullsrc,atrim=0:2[at];'.format(video)
-#  params=params+'[0][at]acrossfade=d=1,afade=d=1[a]" -map "[v]" -map "[a]" -c:v libx264 -crf 22 -preset veryfast -shortest {1}'.format(video, newVid)
+#  params=params+'[0][at]acrossfade=d=1,afade=d=1[a]" -map "[v]" -map "[a]" -c:v libx264 -crf 23 22 -preset veryfast -shortest {1}'.format(video, newVid)
   execFfmpeg(params)
   
   rename(video, video+'.bkp')
@@ -342,7 +343,7 @@ def convertCodec(file, output):
         execFfmpeg(params)   
   
 def reverse(file,output, removeOriginal=True):   
-        params = '-i "{0}" -vf "reverse,scale=1600:900,setdar=16/9" -af areverse {1} "{2}" '.format(file, outParams, output)  
+        params = '-i "{0}" -vf "reverse" -af areverse "{1}" '.format(file, output)  
   
         execFfmpeg(params) 
   
@@ -375,8 +376,31 @@ def concatFilesDirect(files, output):
                 
         params=inputVideos+' -filter_complex "concat=n={len}:v=1:a=0 [v]" -map "[v]" -y "{output}"'.format(len=len(files), output=output)
         execFfmpeg(params)
+        
+def addPrefix(file, prefix):
+          return getFilePath(file)+prefix+getFileName(file)        
+        
+def reencode(file, newOutput=''):
+        if newOutput:
+            newFile=newOutput
+        else:
+            newFile=addPrefix(file, 'tmp')
+            
+        params='-i "'+file+'" -r 60 -c:v libx264 -c:a aac -b:a 192k -ac 2 -vf scale=1600x900,settb=AVTB -profile:v baseline -video_track_timescale 60000 -preset medium -ac 6 -ar 48000 -y "'+newFile+'"'
+        execFfmpeg(params)
+        
+        if (newOutput=='') and (isfile(newFile)):
+           os.remove(file)                      
+           os.rename(newFile, file)                
+    
 
-def concatFiles(files, output, copy=True):
+def concatFiles(files, output, copy=True, Reencode=False):
+        if (Reencode):
+            for n,f in enumerate(files):
+                newf=addPrefix(f, 'tmp')
+                #reencode(f, newf)
+                files[n]=newf
+                    
         listName='tmp'+getFileName(output, False)+'.txt'
         if isfile(listName):
             os.remove(listName)
@@ -387,12 +411,13 @@ def concatFiles(files, output, copy=True):
             thefile.write("file '%s'\n" % item)
 
         thefile.close()
-
+# -video_track_timescale 18000 
         params='-f concat -safe 0 -i "{inputList}" {copy} -y "{output}"'.format(inputList=listName, copy='-c copy' if copy else '', output=output)
+        print(params)
         execFfmpeg(params)
         
-        if isfile(listName):
-            os.remove(listName)
+    #    if isfile(listName):
+    #        os.remove(listName)
 
 def moveToFolder(source, Folder='output'):
     if (Folder == ""):
@@ -414,9 +439,6 @@ def getTempFolder(file):
                 os.makedirs(folder)
 
         return folder
-
-def addPrefix(file, prefix):
-          return getFilePath(file)+prefix+getFileName(file)
 
 def reverseLongVideo(video, output):
         folder=getTempFolder(video)
