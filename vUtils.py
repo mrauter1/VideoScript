@@ -78,7 +78,7 @@ class Filters:
         self.lastAudioLabelNum = 0
         self.inOptions=' -r 60'
         #self.outOptions='-c:v libx264 -c:a aac -crf 23 -preset medium -vf -ac 2 -b:a 192k -f format=yuv420p '
-        self.outOptions=' -y ' 
+        self.outOptions='-r 60 -c:v libx264 -c:a aac -b:a 192k -ac 2 -profile:v baseline -video_track_timescale 60000 -preset medium -ac 6 -ar 48000 -y ' 
         
     def lastVideoLabel(self):
         return '[v{0}]'.format(str(self.lastVideoLabelNum))            
@@ -100,13 +100,19 @@ class Filters:
         return m
             
     def addInput(self, media):
-        self.inputs.append(media)
-                     
+        self.inputs.append(media)               
     
     def getInputLabel(self, media, tipo):
         #Tipo = v ou a
         return '[{0}:{1}]'.format(self.inputs.index(media), tipo)
         
+    def normalizeInputs(self, videoFilter, audioFilter):
+        for m in self.inputs:
+            if videoFilter:
+                self.vFilterMedia(m, videoFilter)
+            if audioFilter:	
+                self.audioFilterMedia(m, audioFilter)			
+		
     def vFilter(self, origin, filterStr):
         block = Block(None)
         block.origin = origin
@@ -128,8 +134,8 @@ class Filters:
         media.addFilter(f)
         
     def audioFilterMedia(self, media, filterStr):
-        f = self.audioFilter(media.vLabel, filterStr)
-        media.addFilter(f)                               
+        f = self.audioFilter(media.aLabel, filterStr)
+        media.addAudioFilter(f)                               
     
     def concat(self, inLabels, v=1, a=1):
         block = ConcatBlock(inLabels, v, a,  self.nextVideoLabel(), self.nextAudioLabel())

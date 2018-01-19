@@ -89,9 +89,10 @@ def reverseAndConcat(video, output):
 
     reversed=tmpFolder+'reversed.mkv'
        
-    newVideo=tmpFolder+getFileName(video)
-    reencode(video, newVideo)
-    video=newVideo
+    reencode(vinheta)
+    #newVideo=tmpFolder+getFileName(video)
+    reencode(video)
+    #video=newVideo
     
     writeLog('reversing: '+reversed)
     reverseLongVideo(video, reversed)
@@ -99,14 +100,12 @@ def reverseAndConcat(video, output):
     f=Filters()
 
     vin=f.newMediaInput(vinheta)
-    #f.vFilterMedia(vin, 'fps=fps=60,scale=1600x900,setdar=16/9,fifo')
     rev=f.newMediaInput(reversed)
     vid=f.newMediaInput(video)
+#    f.normalizeInputs('fps=fps=60,scale=1600x900,setdar=16/9,settb=AVTB,fifo', 'asettb=AVTB, afifo')
     
     v1, a1 = f.changePts(rev.vLabel, rev.aLabel, 0.75)
-    #v1 = f.vFilter(v1.Label, 'fps=fps=60,scale=1600x900,setdar=16/9,fifo')
     v2, a2 = f.changePts(vid.vLabel, vid.aLabel, 0.5)
-    #v2 = f.vFilter(v2.Label, 'fps=fps=60,scale=1600x900,setdar=16/9,fifo')
     
     labels=[]
     labels.append(vin.vLabel)
@@ -210,7 +209,7 @@ def downloadList(list):
 #addMusicsToVideo('science1.mkv', '..//audio//', 'sc2.mkv')
 #reverseAndConcat('science1.mkv', 'sc2.mkv')
 
-reverseAndConcat('..\\Ao Cotrario - Surf fails caixote.mp4', 'test1.mp4')
+reverseAndConcat('WhatsApp Video.mp4', 'test1.mp4')
 
 #reverseAndConcat2('WhatsApp Video.mp4', 'tout.mp4')
 
