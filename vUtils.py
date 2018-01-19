@@ -6,6 +6,9 @@ import shutil
 from subprocess import Popen
 import sys
 
+#defaultOutOptions='-r 60 -c:v libx264 -b:v 2.8M -c:a aac -b:a 192k -ac 2 -profile:v baseline -video_track_timescale 60000 -preset medium -ar 48000 -y'
+defaultOutOptions='-r 60 -c:v libx264 -c:a aac -b:a 192k -ac 2  -crf 17 -profile:v baseline -video_track_timescale 60000 -preset medium -ar 48000 -y'
+
 def sameFile(file1, file2):
     if ((os.path.abspath(os.path.realpath(file1.upper()))) == (os.path.abspath(os.path.realpath(file2.upper())))):
         return True
@@ -76,15 +79,23 @@ class Filters:
         self.output = []
         self.lastVideoLabelNum = 0
         self.lastAudioLabelNum = 0
-        self.inOptions=' -r 60'
+        self.vMap=''
+        self.aMap=''
+        self.inOptions=' '
         #self.outOptions='-c:v libx264 -c:a aac -crf 23 -preset medium -vf -ac 2 -b:a 192k -f format=yuv420p '
-        self.outOptions='-r 60 -c:v libx264 -c:a aac -b:a 192k -ac 2 -profile:v baseline -video_track_timescale 60000 -preset medium -ac 6 -ar 48000 -y ' 
+        self.outOptions=defaultOutOptions 
         
     def lastVideoLabel(self):
-        return '[v{0}]'.format(str(self.lastVideoLabelNum))            
+        if self.lastVideoLabelNum > 0:
+            return '[v{0}]'.format(str(self.lastVideoLabelNum))
+        else:
+            return '0:v'            
         
     def lastAudioLabel(self):
-        return '[a{0}]'.format(str(self.lastAudioLabelNum))        
+        if self.lastAudioLabelNum > 0:
+            return '[a{0}]'.format(str(self.lastAudioLabelNum))
+        else:
+            return '0:a'             
         
     def nextVideoLabel(self):
         self.lastVideoLabelNum = self.lastVideoLabelNum+1
@@ -135,10 +146,21 @@ class Filters:
         
     def audioFilterMedia(self, media, filterStr):
         f = self.audioFilter(media.aLabel, filterStr)
-        media.addAudioFilter(f)                               
+        media.addAudioFilter(f)    
+        
+    def trimMedia(self, media, start, end):
+        self.vFilterMedia(media, )
+        self.audioFilterMedia(media, )
     
     def concat(self, inLabels, v=1, a=1):
-        block = ConcatBlock(inLabels, v, a,  self.nextVideoLabel(), self.nextAudioLabel())
+        vLabel=''
+        if v>0:
+            vLabel=self.nextVideoLabel()
+        aLabel=''
+        if a>0:
+            aLabel=self.nextAudioLabel()            
+        
+        block = ConcatBlock(inLabels, v, a,  vLabel, aLabel)
         self.blocks.append(block)
         return block
     
@@ -147,6 +169,12 @@ class Filters:
         vBlock = self.vFilter(vLabel, 'setpts='+str(pts)+'*PTS')
         aBlock = self.audioFilter(aLabel, 'atempo='+str("%.3f" % atempo))
         return vBlock, aBlock
+    
+    def getvMap(self):
+        return self.vMap if self.vMap else self.lastVideoLabel()
+    
+    def getaMap(self):
+        return self.aMap if self.aMap else self.lastAudioLabel()
    
     def getCmdLine(self, output):
         inputs = ''
@@ -159,13 +187,11 @@ class Filters:
             if filters:
                 filters=filters+';'   
             filters = filters + b.toStr()
-
-            cnt=cnt+1
             
-        v=self.lastVideoLabel()
-        a=self.lastAudioLabel()        
+        if filters:
+            filters='-filter_complex "'+filters+'"'                              
 
-        return inputs +' '+self.inOptions+' -filter_complex "'+filters+'" -map "'+v+'" -map "'+a+'" '+self.outOptions+' '+output
+        return inputs +' '+self.inOptions+' '+filters+' -map "'+self.getvMap()+'" -map "'+self.getaMap()+'" '+self.outOptions+' "'+output+'"'
         
 class ConcatFilter:
 
@@ -346,15 +372,7 @@ def changePts(file, pts, output):
 def convertCodec(file, output):
         params = '-i "{0}" -vf "scale=1600:900,setdar=16/9" {1} "{2}" '.format(file, outParams, output)  
   
-        execFfmpeg(params)   
-  
-def reverse(file,output, removeOriginal=True):   
-        params = '-i "{0}" -vf "reverse" -af areverse "{1}" '.format(file, output)  
-  
-        execFfmpeg(params) 
-  
-        if (os.path.isfile(output)) & (removeOriginal): 
-            os.remove(file) 
+        execFfmpeg(params)       
 		
 def splitVideo(video, tempoVideo=4, outputPrefix='vid'):
         duration = getDuration(video)
@@ -386,19 +404,32 @@ def concatFilesDirect(files, output):
 def addPrefix(file, prefix):
           return getFilePath(file)+prefix+getFileName(file)        
         
-def reencode(file, newOutput=''):
+def reencode(file, newOutput='', videoProcessing='', audioProcessing=''):
         if newOutput:
             newFile=newOutput
         else:
             newFile=addPrefix(file, 'tmp')
             
-        params='-i "'+file+'" -r 60 -c:v libx264 -c:a aac -b:a 192k -ac 2 -vf scale=1600x900,settb=AVTB -profile:v baseline -video_track_timescale 60000 -preset medium -ac 6 -ar 48000 -y "'+newFile+'"'
-        execFfmpeg(params)
+        f=Filters()
+         
+        video=f.newMediaInput(file) 
+        f.vFilterMedia(video, 'scale=1600x900,settb=AVTB')    
+        
+        if videoProcessing:    
+            f.vFilterMedia(video, videoProcessing)
+
+        if audioProcessing:             
+            f.audioFilterMedia(video, audioProcessing)
+        else:
+            f.aMap='0:a'        
+
+        f.outOptions = defaultOutOptions        
+
+        execFfmpeg(f.getCmdLine(newFile))
         
         if (newOutput=='') and (isfile(newFile)):
            os.remove(file)                      
-           os.rename(newFile, file)                
-    
+           os.rename(newFile, file)                    
 
 def concatFiles(files, output, copy=True, Reencode=False):
         if (Reencode):
@@ -445,8 +476,17 @@ def getTempFolder(file):
                 os.makedirs(folder)
 
         return folder
+    
+def reverse(file, output, outParams='', removeOriginal=True):   
+        params = '-i "{0}" -vf "reverse" -af areverse {1} "{2}" '.format(file, outParams, output)  
+  
+        print(params)
+        execFfmpeg(params) 
+  
+        if (os.path.isfile(output)) & (removeOriginal): 
+            os.remove(file)         
 
-def reverseLongVideo(video, output):
+def reverseLongVideo(video, output, outParams=''):
         folder=getTempFolder(video)
         listVideos=[]
         num=splitVideoKeyFrames(video, folder+'out')
@@ -455,7 +495,7 @@ def reverseLongVideo(video, output):
         for f in files:
                 file=folder+f
                 fileRev=addPrefix(file, 'rev_')
-                reverse(file, fileRev)                
+                reverse(file, fileRev, outParams)                
                 listVideos.append(fileRev)
 
         concatFiles(listVideos, output)
@@ -463,7 +503,6 @@ def reverseLongVideo(video, output):
         shutil.rmtree(folder)
 
         return output
-	    
 
-		
+
 

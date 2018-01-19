@@ -1,6 +1,7 @@
 from vUtils import *
 import os
 import sys
+import datetime
 
 import time
 from random import shuffle
@@ -39,26 +40,6 @@ def dump(obj):
 vinheta = 'vinheta2.mp4'
 downPath = 'downloads'
 
-def concatMedias2(medias, output):
-    f=Filters()
-    
-    labels=[]
-    
-    for m in medias:    
-        media = f.newMediaInput(m)
-        f.addInput(media)
-        v = f.vFilter(media.vLabel, 'fps=fps=60,scale=1600x900,setdar=16/9')     
-        labels.append(v.Label)
-        labels.append(media.aLabel)                
-       
-    c = f.concat(labels)
-    
-    f.changePts(c.vOutLabel, c.aOutLabel, 0.5)
-
-    writeLog('concatenating videos: ' + output)
-    print(f.getCmdLine(output))
-    execFfmpeg(f.getCmdLine(output))    
-
 def addMusicsToVideos(videoList, audioPath, concat):
     writeLog('Adding music to video. Audio path: '+audioPath)
     videoTime=0
@@ -81,102 +62,127 @@ def addMusicsToVideos(videoList, audioPath, concat):
             b.Filter='atrim=0:'+str(end)
             m.addAudioFilter(b)
             break
+        
+def addMusicsToVideo(video, audioPath, output):
+    writeLog('Adding music to video. Audio path: '+audioPath)
+    videoTime=0
+    videoTime = getDuration(video)
+
+    totalAudioTime = 0
+
+    audios = [f for f in os.listdir(audioPath) if (os.path.isfile(os.path.join(audioPath, f)) and (os.path.splitext(f)[1].lower() in ['.mp3']))]
+    shuffle(audios)
+    
+    f = Filters() 
+    
+    f.newMediaInput(video)
+    
+    labels = []
+
+    for a in audios:
+        audio = os.path.join(audioPath, a)
+        aduration=getDuration(audio)
+        totalAudioTime = totalAudioTime+aduration
+        m=f.newMediaInput(audio)     
+        f.audioFilterMedia(m, 'adelay=1500')              
+        
+        if (totalAudioTime >= videoTime):
+            end=aduration-(totalAudioTime-videoTime)
+            f.audioFilterMedia(m, 'atrim=0:'+str(end))
+            
+        labels.append(m.aLabel)
+        
+        if (totalAudioTime >= videoTime):
+            break            
+
+    if len(labels) > 1:       
+        f.concat(labels, 0, 1)
+    
+    if f.lastAudioLabelNum == 0:
+        f.aMap='1:a'
+    
+    f.outOptions='-c:v copy -c:a aac -b:a 192k -ac 2 -video_track_timescale 60000 -ar 48000 -y '
+    
+    print(f.getCmdLine(output))
+    
+    execFfmpeg(f.getCmdLine(output))  
+        
+def preProcessVideo(video, newOutput, outOptions='', trimstart='', trimend=''):
+    if newOutput:
+        newFile=newOutput
+    else:
+        newFile=addPrefix(file, 'tmp')
+           
+    f=Filters()
+    
+    trimopt=''
+    if (trimstart):
+        trimopt='-ss '+trimstart
+        
+    if (trimend):
+        trimopt=trimopt+' -to '+trimend
+        
+    if trimopt:
+        trimopt=trimopt+' -async 1'       
+        
+    f.inOptions=trimopt     
+                
+    vid=f.newMediaInput(video)
+            
+#    f.vFilterMedia(vid, 'fps=fps=60,scale=1600x900,settb=AVTB')
+
+    if f.outOptions:
+        f.outOptions = outOptions
+
+    print(f.getCmdLine(newFile))
+    execFfmpeg(f.getCmdLine(newFile))
+        
+    if (newOutput=='') and (isfile(newFile)):
+       os.remove(file)                      
+       os.rename(newFile, file)                   
 
 def reverseAndConcat(video, output):
     print(video)
     
     tmpFolder=getTempFolder(output)
-
-    reversed=tmpFolder+'reversed.mkv'
        
-    reencode(vinheta)
-    #newVideo=tmpFolder+getFileName(video)
-    reencode(video)
-    #video=newVideo
-    
+    #reencode(vinheta)
+
+    processed=tmpFolder+'processed'+getExt(video) 
+    writeLog('preProcessing video: '+processed)
+    preProcessVideo(video, processed, '-c:v copy -c:a copy -y', '', '')
+
+    reversed=tmpFolder+'reversed'+getExt(video)    
     writeLog('reversing: '+reversed)
-    reverseLongVideo(video, reversed)
+    reverseLongVideo(processed, reversed, '')
 
     f=Filters()
-
-    vin=f.newMediaInput(vinheta)
     rev=f.newMediaInput(reversed)
-    vid=f.newMediaInput(video)
-#    f.normalizeInputs('fps=fps=60,scale=1600x900,setdar=16/9,settb=AVTB,fifo', 'asettb=AVTB, afifo')
+    vid=f.newMediaInput(processed)
     
     v1, a1 = f.changePts(rev.vLabel, rev.aLabel, 0.75)
     v2, a2 = f.changePts(vid.vLabel, vid.aLabel, 0.5)
+         
+    c = f.concat([v1.Label, a1.Label, v2.Label, a2.Label], v=1, a=1)
     
-    labels=[]
-    labels.append(vin.vLabel)
-    labels.append(vin.aLabel)
-    labels.append(v1.Label)
-    labels.append(a1.Label)
-    labels.append(v2.Label)
-    labels.append(a2.Label)                  
-       
-    c = f.concat(labels)
+    conc1=tmpFolder+'conc1'+getExt(video) 
+    writeLog('concatenating videos: ' + conc1)
+
+    writeLog(f.getCmdLine(conc1))      
+    execFfmpeg(f.getCmdLine(conc1))
+    
+    comMusica=tmpFolder+'comMusica'+getExt(conc1)    
+    addMusicsToVideo(conc1, '..//audio//', comMusica)
 
     writeLog('concatenating videos: ' + output)
-    writeLog(f.getCmdLine(output))
-    print(f.getCmdLine(output))
+    concatFiles([vinheta, comMusica], output)
     
-    execFfmpeg(f.getCmdLine(output))        
-
     try:
+        print('nada')
         if os.path.isfile(output):
             shutil.rmtree(tmpFolder)
     except:
-        print("Erro ao deletar a pasta temporaria")           
-
-def reverseAndConcat2(video, output):
-    print(video)
-    
-    writeLog('reversing and concating video:' +video)
-    tmpFolder=getTempFolder(output)
-    fast=tmpFolder+'fast_'+getFileName(output)
-    
-    #convertCodec(vinheta, getFileName(vinheta,False)+'.'+getExt(vinheta))
-
-    writeLog('changing pts: '+fast)
-#    changePts(video, 0.75, fast)
-    
-    reversed=tmpFolder+'rev_'+getFileName(output) 
-    writeLog('reversing: '+reversed)   
-#    reverseLongVideo(fast, reversed)
-    
-    veryfast=tmpFolder+'vfst_'+getFileName(output)  
-    writeLog('acelerating: '+veryfast)  
-#    changePts(fast, 0.75, veryfast) 
-        
-    out1=tmpFolder+'out1_'+getFileName(output)     
-        
-    writeLog('concatenating videos: '+out1)    
-    concat=ConcatFilter()
-    concat.mapParameters=' -y'    
-    r=concat.addMedia(reversed, False)
-    f=concat.addMedia(veryfast, False)
-    addMusicsToVideos([reversed,veryfast], '..//audio//', concat)
-    #revvideo=tmpFolder+'final'
-
-    #print(concat.getFilterString(out1))
-    
-    #execFfmpeg(concat.getFilterString(out1))
-    
-    concatlist = []
-    concatlist.append(vinheta)
-    concatlist.append(reversed)
-    concatlist.append(veryfast)
-    concatFiles(concatlist, output, True, True)
-        
-#     concat=ConcatFilter()
-#     concat.mapParameters=' -y'
-#     concat.addMedia(vinheta)
-#     concat.addMedia(out1) 
-#     execFfmpeg(concat.getFilterString(out1))    
-        
-##    if os.path.isfile(output):
-##        shutil.rmtree(tmpFolder)
+        writeLog('Erro ao deletar a pasta temporaria')           
 
 def revcatList(path):
     writeLog('Processing path ' + path)
@@ -191,7 +197,11 @@ def revcatList(path):
         if (os.path.isfile(output)):
             continue
         
-        reverseAndConcat(video, output)
+        try:
+            reverseAndConcat(video, output)
+        except:
+            writeLog('Erro ao criar video: '+output)   
+             
 
 
 def downloadList(list):
@@ -206,18 +216,11 @@ def downloadList(list):
         writeLog('downloading '+l)
         execYoutubedl(' -o "'+downPath+'//%(title)s.%(ext)s" "'+l+'"')      
 
-#addMusicsToVideo('science1.mkv', '..//audio//', 'sc2.mkv')
-#reverseAndConcat('science1.mkv', 'sc2.mkv')
+#preProcessVideo('tout.mp4', 'testepre.mp4', '00:02:29', '00:02:31.99')
 
-reverseAndConcat('WhatsApp Video.mp4', 'test1.mp4')
+reverseAndConcat('..\\Nature Beautiful short video 720p HD.mp4', 'Nature Beautiful.mp4')
 
-#reverseAndConcat2('WhatsApp Video.mp4', 'tout.mp4')
-
-m = []
-m.append(vinheta)
-m.append('science1.mkv')
-m.append('sc2.mkv')
-# concatMedias2(m, 'out.mp4')
+#reverseAndConcat('WhatsApp Video.mp4', 'test1.mp4')
 
 if (len(sys.argv) > 1):
     if (sys.argv[1] == '-rev'):
