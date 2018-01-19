@@ -141,7 +141,7 @@ def preProcessVideo(video, newOutput, outOptions='', trimstart='', trimend=''):
        os.remove(file)                      
        os.rename(newFile, file)                   
 
-def reverseAndConcat(video, output):
+def reverseAndConcat(video, output, trimstart='', trimend='', revpts=0.75, normalpts=0.5):
     print(video)
     
     tmpFolder=getTempFolder(output)
@@ -150,7 +150,7 @@ def reverseAndConcat(video, output):
 
     processed=tmpFolder+'processed'+getExt(video) 
     writeLog('preProcessing video: '+processed)
-    preProcessVideo(video, processed, '-c:v copy -c:a copy -y', '', '')
+    preProcessVideo(video, processed, '-c:v copy -c:a copy -y', trimstart, trimend)
 
     reversed=tmpFolder+'reversed'+getExt(video)    
     writeLog('reversing: '+reversed)
@@ -160,8 +160,8 @@ def reverseAndConcat(video, output):
     rev=f.newMediaInput(reversed)
     vid=f.newMediaInput(processed)
     
-    v1, a1 = f.changePts(rev.vLabel, rev.aLabel, 0.75)
-    v2, a2 = f.changePts(vid.vLabel, vid.aLabel, 0.5)
+    v1, a1 = f.changePts(rev.vLabel, rev.aLabel, revpts)
+    v2, a2 = f.changePts(vid.vLabel, vid.aLabel, normalpts)
          
     c = f.concat([v1.Label, a1.Label, v2.Label, a2.Label], v=1, a=1)
     
@@ -193,7 +193,7 @@ def revcatList(path):
     
     for f in files:
         video = os.path.join(path, f)
-        output = 'output\\Vid_' + getFileName(video)
+        output = '..\\output\\RV' + getFileName(video)[:10]
         if (os.path.isfile(output)):
             continue
         
@@ -201,8 +201,37 @@ def revcatList(path):
             reverseAndConcat(video, output)
         except:
             writeLog('Erro ao criar video: '+output)   
-             
-
+            
+def downloadAndProcessVideos(fileList):    
+    def getValue(name, default):
+        index=l.find('['+name+'=')
+        if index>=0:
+            stId=index+len('['+name+'=')
+            return l[stId:l.find(']',index)]
+        else:
+            return default               
+    
+    with open(fileList) as f:
+        lines = f.read().splitlines()
+        
+    for l in lines:
+        index=l.find(' ')
+        if index<=0:
+            index=len(l)
+            
+        url= l[0:index]
+        
+        trimstart=getValue('start', '')
+        trimend=getValue('end', '')
+        name=getValue('name', '')
+        revpts=getValue('revpts', '0.75')
+        normalpts=getValue('revpts', '0.5')
+        
+        print(url)
+        print(trimstart)
+        print(trimend)
+        print(name)
+        print(revpts)
 
 def downloadList(list):
     writeLog('downloading list ' + list)
@@ -218,7 +247,8 @@ def downloadList(list):
 
 #preProcessVideo('tout.mp4', 'testepre.mp4', '00:02:29', '00:02:31.99')
 
-reverseAndConcat('..\\Nature Beautiful short video 720p HD.mp4', 'Nature Beautiful.mp4')
+downloadAndProcessVideos('Videos.txt')
+#reverseAndConcat('..\\Surf fails caixote.mp4', 'Surf Fails.mp4', '00:00:38', '00:01:08')
 
 #reverseAndConcat('WhatsApp Video.mp4', 'test1.mp4')
 
