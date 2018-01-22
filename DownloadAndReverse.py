@@ -6,6 +6,7 @@ import datetime
 import time
 from random import shuffle
 from nose.util import getfilename
+from win32con import CDM_GETFILEPATH
 
 ##concat=ConcatFilter()
 ##concat.addMedia('vinheta2.mp4')
@@ -143,7 +144,7 @@ def preProcessVideo(video, newOutput, outOptions='', trimstart='', trimend=''):
        os.rename(newFile, file)                   
 
 def reverseAndConcat(video, output, trimstart='', trimend='', revpts=0.75, normalpts=0.5):
-    print(video)
+    writeLog('Iniciando reverseAndConcat do video: '+video)
     
     tmpFolder=getTempFolder(output)
        
@@ -179,7 +180,6 @@ def reverseAndConcat(video, output, trimstart='', trimend='', revpts=0.75, norma
     concatFiles([vinheta, comMusica], output)
     
     try:
-        print('nada')
         if os.path.isfile(output):
             shutil.rmtree(tmpFolder)
     except:
@@ -234,23 +234,28 @@ def downloadAndProcessVideos(fileList):
 #             print(trimend)
 #             print(name)
 #             print(revpts)
-                
-            fileName=execYoutubedl(' -o "%(title)s.%(ext)s" --get-filename  "'+url+'"')
-            print (fileName)
-            fileName=getFileName(fileName, False)[0:25]+getExt(fileName)
+
+            fileName=execYoutubedl(' -o "%(title)s.%(ext)s" --get-filename --merge-output-format mp4 "'+url+'"', True)
             if name:        
                 fileName=downPath+name+getExt(fileName)
             else:
-                fileName=downPath+fileName
-                
-            print('Nome do arquivo: '+fileName)
-            execYoutubedl(' -o "'+fileName+'"  "'+url+'"')  
+                fileName=downPath+getFileName(fileName[0:25], False)+getExt(fileName)      
+
+            writeLog('Iniciando o processamento da url: '+url)
             
-            output='..\\output\\'+getFileName(fileName)
+            writeLog(fileName)
+                                
+            execYoutubedl(' -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4" -o "'+fileName+'" "'+url+'" --merge-output-format mp4 --exec "lastdownload.bat {}" ')                       
+            if not isfile(fileName):
+                fileName = getFilePath(fileName)+getFileName(fileName)+'.mkv'
+
+            if not isfile(fileName):
+                raise Exception("Video não encontrado! Url: "+url+", nome arquivo: "+fileName)
                       
-            print('iniciando processamento no arquivo: '+fileName)
+            output='..\\output\\'+getFileName(fileName[0:25], False)+getExt(fileName)                        
+            writeLog('iniciando processamento no arquivo: '+fileName+', output: '+output)
             reverseAndConcat(fileName, output, trimstart, trimend)
-            print('finalizado processamento do arquivo: '+output)
+            writeLog('finalizado processamento do arquivo: '+output)
         except Exception as err:
             try:
                 writeLog('Erro ao processar url: '+url+' Erro: '+str(err))
@@ -275,6 +280,8 @@ downloadAndProcessVideos('Videos.txt')
 #reverseAndConcat('..\\Surf fails caixote.mp4', 'Surf Fails.mp4', '00:00:38', '00:01:08')
 
 #reverseAndConcat('WhatsApp Video.mp4', 'test1.mp4')
+
+#print(getDuration('C:\\Videos\\output\\20 Amazing Science Experitmp\\reversed.mp4'))
 
 if (len(sys.argv) > 1):
     if (sys.argv[1] == '-rev'):

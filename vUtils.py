@@ -324,14 +324,21 @@ def execFFprobe(params):
 def execFfmpeg(params):
 	shellExec(getFfmpeg()+params)
 
-def execYoutubedl(params):
-    retorno = shellExecOutput('"'+getCurDir()+'\\..\\youtube-dl.exe" '+params)
+def execYoutubedl(params, retornaNome=False):
+    if not retornaNome:
+        shellExec('"'+getCurDir()+'\\..\\youtube-dl.exe" '+params)
+        retorno = ''
+    else:
+        retorno = shellExecOutput('"'+getCurDir()+'\\..\\youtube-dl.exe" '+params)    
 
     return retorno.strip()    
 
 def getDuration(video):
-	retorno = shellExecOutput(getFfprobe()+' -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{0}"'.format(video))
-	return float(retorno.strip())
+    if not isfile(video):
+        raise Exception("getDuration: Arquivo "+video+" não existe!!")
+        
+    retorno = shellExecOutput(getFfprobe()+' -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{0}"'.format(video))
+    return float(retorno.strip())
 
 def getExt(file):
         return os.path.splitext(file)[1].lower()
