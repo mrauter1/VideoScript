@@ -3,7 +3,7 @@ import os
 from os.path import isfile, join
 import re
 import shutil
-from subprocess import Popen
+from subprocess import Popen,PIPE,STDOUT
 import sys
 
 #defaultOutOptions='-r 60 -c:v libx264 -b:v 2.8M -c:a aac -b:a 192k -ac 2 -profile:v baseline -video_track_timescale 60000 -preset medium -ar 48000 -y'
@@ -300,10 +300,11 @@ def getCurDir():
     return os.path.dirname(os.path.realpath(__file__))    
 
 def shellExec(cmd, printCmd=True):
-    p = Popen(cmd, shell=True)
-    stdout, stderr = p.communicate()
     if printCmd:
-        print(cmd)  
+        print(cmd)
+         
+    p = Popen(cmd, shell=True)
+    stdout, stderr = p.communicate() 
 	
 def getFfprobe():
 	return '"'+getCurDir()+'\\..\\ffprobe.exe" '	
@@ -311,7 +312,7 @@ def getFfprobe():
 def shellExecOutput(cmd):
         import subprocess
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        return process.stdout
+        return process.communicate()[0].decode("utf-8")
 
 def getFfmpeg():
 	return '"'+getCurDir()+'\\..\\ffmpeg.exe" '
@@ -324,11 +325,13 @@ def execFfmpeg(params):
 	shellExec(getFfmpeg()+params)
 
 def execYoutubedl(params):
-	shellExec('"'+getCurDir()+'\\..\\youtube-dl.exe" '+params)    
+    retorno = shellExecOutput('"'+getCurDir()+'\\..\\youtube-dl.exe" '+params)
+
+    return retorno.strip()    
 
 def getDuration(video):
 	retorno = shellExecOutput(getFfprobe()+' -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{0}"'.format(video))
-	return float(retorno.readline().decode('UTF-8').strip())
+	return float(retorno.strip())
 
 def getExt(file):
         return os.path.splitext(file)[1].lower()

@@ -19,6 +19,7 @@ from nose.util import getfilename
 ##sys.exit()
 
 def writeLog(text):
+    print(text)
     file  = open('DownloadAndReverse.log', 'a')
     file.write(time.strftime("%H:%M:%S: ")+text+'\n')
     file.close()
@@ -38,7 +39,7 @@ def dump(obj):
   return newobj
 
 vinheta = 'vinheta2.mp4'
-downPath = 'downloads'
+downPath = 'downloads\\'
 
 def addMusicsToVideos(videoList, audioPath, concat):
     writeLog('Adding music to video. Audio path: '+audioPath)
@@ -174,7 +175,7 @@ def reverseAndConcat(video, output, trimstart='', trimend='', revpts=0.75, norma
     comMusica=tmpFolder+'comMusica'+getExt(conc1)    
     addMusicsToVideo(conc1, '..//audio//', comMusica)
 
-    writeLog('concatenating videos: ' + output)
+    writeLog('finishing video: ' + output)
     concatFiles([vinheta, comMusica], output)
     
     try:
@@ -215,23 +216,46 @@ def downloadAndProcessVideos(fileList):
         lines = f.read().splitlines()
         
     for l in lines:
-        index=l.find(' ')
-        if index<=0:
-            index=len(l)
+        try:
+            index=l.find(' ')
+            if index<=0:
+                index=len(l)
+                
+            url= l[0:index]
             
-        url= l[0:index]
-        
-        trimstart=getValue('start', '')
-        trimend=getValue('end', '')
-        name=getValue('name', '')
-        revpts=getValue('revpts', '0.75')
-        normalpts=getValue('revpts', '0.5')
-        
-        print(url)
-        print(trimstart)
-        print(trimend)
-        print(name)
-        print(revpts)
+            trimstart=getValue('start', '')
+            trimend=getValue('end', '')
+            name=getValue('name', '')
+            revpts=getValue('revpts', '0.75')
+            normalpts=getValue('revpts', '0.5')
+            
+#             print(url)
+#             print(trimstart)
+#             print(trimend)
+#             print(name)
+#             print(revpts)
+                
+            fileName=execYoutubedl(' -o "%(title)s.%(ext)s" --get-filename  "'+url+'"')
+            print (fileName)
+            fileName=getFileName(fileName, False)[0:25]+getExt(fileName)
+            if name:        
+                fileName=downPath+name+getExt(fileName)
+            else:
+                fileName=downPath+fileName
+                
+            print('Nome do arquivo: '+fileName)
+            execYoutubedl(' -o "'+fileName+'"  "'+url+'"')  
+            
+            output='..\\output\\'+getFileName(fileName)
+                      
+            print('iniciando processamento no arquivo: '+fileName)
+            reverseAndConcat(fileName, output, trimstart, trimend)
+            print('finalizado processamento do arquivo: '+output)
+        except Exception as err:
+            try:
+                writeLog('Erro ao processar url: '+url+' Erro: '+str(err))
+            except:
+                print('Erro')        
 
 def downloadList(list):
     writeLog('downloading list ' + list)
