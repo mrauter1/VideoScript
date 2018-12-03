@@ -307,7 +307,7 @@ def shellExec(cmd, printCmd=True):
     stdout, stderr = p.communicate() 
 	
 def getFfprobe():
-	return '"'+getCurDir()+'\\..\\ffprobe.exe" '	
+	return '"'+getCurDir()+'\\ffprobe.exe" '	
 	
 def shellExecOutput(cmd):
         import subprocess
@@ -315,7 +315,7 @@ def shellExecOutput(cmd):
         return process.communicate()[0].decode("utf-8")
 
 def getFfmpeg():
-	return '"'+getCurDir()+'\\..\\ffmpeg.exe" '
+	return '"'+getCurDir()+'\\ffmpeg.exe" '
 #return "ffmpeg.exe "
 	
 def execFFprobe(params):
@@ -326,10 +326,10 @@ def execFfmpeg(params):
 
 def execYoutubedl(params, retornaNome=False):
     if not retornaNome:
-        shellExec('"'+getCurDir()+'\\..\\youtube-dl.exe" '+params)
+        shellExec('"'+getCurDir()+'\\youtube-dl.exe" '+params)
         retorno = ''
     else:
-        retorno = shellExecOutput('"'+getCurDir()+'\\..\\youtube-dl.exe" '+params)    
+        retorno = shellExecOutput('"'+getCurDir()+'\\youtube-dl.exe" '+params)    
 
     return retorno.strip()    
 

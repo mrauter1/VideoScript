@@ -174,7 +174,7 @@ def reverseAndConcat(video, output, trimstart='', trimend='', revpts=0.75, norma
     execFfmpeg(f.getCmdLine(conc1))
     
     comMusica=tmpFolder+'comMusica'+getExt(conc1)    
-    addMusicsToVideo(conc1, '..//audio//', comMusica)
+    addMusicsToVideo(conc1, '//audio//', comMusica)
 
     writeLog('finishing video: ' + output)
     concatFiles([vinheta, comMusica], output)
@@ -185,6 +185,10 @@ def reverseAndConcat(video, output, trimstart='', trimend='', revpts=0.75, norma
     except:
         writeLog('Erro ao deletar a pasta temporaria')           
 
+def getOutputDir():
+    ##return vUtils.getCurDir()+'\\output\\'
+    return 'output\\'
+
 def revcatList(path):
     writeLog('Processing path ' + path)
     files = [f for f in os.listdir(path) if (os.path.isfile(os.path.join(path, f)) and (os.path.splitext(f)[1].lower() in ['.mkv', '.mp4']))]
@@ -194,7 +198,7 @@ def revcatList(path):
     
     for f in files:
         video = os.path.join(path, f)
-        output = '..\\output\\RV' + getFileName(video)[:10]
+        output = getOutputDir()+'RV' + getFileName(video)[:10]
         if (os.path.isfile(output)):
             continue
         
@@ -252,7 +256,7 @@ def downloadAndProcessVideos(fileList):
             if not isfile(fileName):
                 raise Exception("Video não encontrado! Url: "+url+", nome arquivo: "+fileName)
                       
-            output='..\\output\\'+getFileName(fileName[0:25], False)+getExt(fileName)                        
+            output=getOutputDir()+getFileName(fileName[0:25], False)+getExt(fileName)                        
             writeLog('iniciando processamento no arquivo: '+fileName+', output: '+output)
             reverseAndConcat(fileName, output, trimstart, trimend)
             writeLog('finalizado processamento do arquivo: '+output)
@@ -276,8 +280,9 @@ def downloadList(list):
 
 #preProcessVideo('tout.mp4', 'testepre.mp4', '00:02:29', '00:02:31.99')
 
+print("iniciando")
 downloadAndProcessVideos('Videos.txt')
-#reverseAndConcat('..\\Surf fails caixote.mp4', 'Surf Fails.mp4', '00:00:38', '00:01:08')
+#reverseAndConcat('\\Surf fails caixote.mp4', 'Surf Fails.mp4', '00:00:38', '00:01:08')
 
 #reverseAndConcat('WhatsApp Video.mp4', 'test1.mp4')
 
@@ -285,7 +290,7 @@ downloadAndProcessVideos('Videos.txt')
 
 if (len(sys.argv) > 1):
     if (sys.argv[1] == '-rev'):
-        reverseAndConcat(sys.argv[2], 'output\\Vid_'+getFileName(video))    
+        reverseAndConcat(sys.argv[2], getOutputDir()+'Vid_'+getFileName(video))    
     elif (sys.argv[1] == '-revlist'):
         revcatList(sys.argv[2])    
     elif (sys.argv[1] == '-dl'):
