@@ -179,7 +179,6 @@ class Filters:
     def getCmdLine(self, output):
         inputs = ''
         filters = ''
-        cnt=0
         for m in self.inputs:
             inputs = inputs +' -i "'+m.mediaPath+'" '
             
